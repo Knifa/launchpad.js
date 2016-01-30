@@ -13,9 +13,10 @@ export class AudioScheduler {
     this.delayNode.connect(this.audio.ctx.destination)
 
     this.synths = {
-      kick: new DrumSynthGraph(this.audio, 100, 0.5),
+      kick: new DrumSynthGraph(this.audio, 200, 1),
       lowTom: new DrumSynthGraph(this.audio, 400, 1),
-      highTom: new DrumSynthGraph(this.audio, 800, 1)
+      highTom: new DrumSynthGraph(this.audio, 800, 1),
+      defaultBeat: new DrumSynthGraph(this.audio, 100, 0.5)
     }
 
     for (let s in this.synths) {

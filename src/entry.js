@@ -39,6 +39,10 @@ class Level {
 
   hit (sound, { x, y }) {
     let colorIndex = consts.BEATS.indexOf(sound)
+    if (colorIndex === consts.BEAT_DEFAULT) {
+      // This should never happen
+      return false
+    }
     for (let pattern of this.patterns[colorIndex]) {
       if (x >= pattern[0] && x < pattern[0] + pattern[2] &&
           y >= pattern[1] && y < pattern[1] + pattern[3]) {
@@ -54,7 +58,8 @@ level1.patterns = [
   [[0, 0, 5, 10]],
   [[5, 0, 5, 10]]
 ]
-level1.beats = [consts.BEAT_ONE, consts.BEAT_ONE, consts.BEAT_TWO, consts.BEAT_TWO]
+level1.beats = [consts.BEAT_ONE, consts.BEAT_ONE, consts.BEAT_DEFAULT, consts.BEAT_DEFAULT,
+                consts.BEAT_TWO, consts.BEAT_TWO, consts.BEAT_DEFAULT, consts.BEAT_DEFAULT]
 
 let level2 = new Level()
 level2.patterns = [
@@ -62,7 +67,10 @@ level2.patterns = [
   [[5, 0, 5, 5]],
   [[0, 5, 5, 5]]
 ]
-level2.beats = [consts.BEAT_THREE, consts.BEAT_ONE, consts.BEAT_TWO, consts.BEAT_ONE]
+level2.beats = [consts.BEAT_THREE, consts.BEAT_DEFAULT,
+                consts.BEAT_ONE, consts.BEAT_DEFAULT,
+                consts.BEAT_TWO, consts.BEAT_DEFAULT,
+                consts.BEAT_ONE, consts.BEAT_DEFAULT,]
 
 let level3 = new Level()
 level3.patterns = [
@@ -150,7 +158,7 @@ export class Game {
            this.level !== null &&
            recentSound.time < now - this.level.beatWindow) {
       recentSound = this.audioScheduler.scheduledSounds.shift()
-      if (recentSound !== undefined) {
+      if (recentSound !== undefined && recentSound.sound != 'defaultBeat') {
         this.hpDown()
       }
     }
@@ -187,7 +195,7 @@ export class Game {
         this.hpUp()
         this.pulse = 1
         this.audioScheduler.scheduledSounds.shift()
-      } else {
+      } else if (recentSound.sound !== 'defaultBeat') {
         // There is still time to hit the current beat
         console.log('miss1', now, recentSound.time)
         this.pulse = 0
@@ -200,7 +208,9 @@ export class Game {
         this.audioScheduler.scheduledSounds.shift()
       }
       this.pulse = 0
-      this.hpDown()
+      if (recentSound.sound !== 'defaultBeat') {
+        this.hpDown()
+      }
     }
   }
 
