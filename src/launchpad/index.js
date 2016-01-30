@@ -20,7 +20,6 @@ export function getLaunchpad() {
       let launchpadIn, launchpadOut = null;
 
       midi.inputs.forEach((device) => {
-        console.log(device.name)
         if (device.name === consts.MIDI_NAME_WINDOWS_IN ||
             device.name === consts.MIDI_NAME_OSX ||
             device.name === consts.MIDI_NAME_LINUX) {
@@ -29,7 +28,6 @@ export function getLaunchpad() {
       })
 
       midi.outputs.forEach((device) => {
-        console.log(device.name)
         if (device.name === consts.MIDI_NAME_WINDOWS_OUT ||
             device.name === consts.MIDI_NAME_OSX ||
             device.name === consts.MIDI_NAME_LINUX) {
