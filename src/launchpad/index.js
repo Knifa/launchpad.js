@@ -1,6 +1,7 @@
 import LaunchpadDevice from './device'
 import LaunchpadStateTracker from './state'
 import LaunchpadCanvas from './canvas'
+import { LaunchpadDebugMidiIn, LaunchpadDebugMidiOut } from './debug'
 
 import * as consts from './consts'
 
@@ -14,7 +15,16 @@ class Launchpad {
 }
 
 
-export function getLaunchpad() {
+export function getLaunchpad(debug = false) {
+  if (debug) {
+    return new Promise((resolve, reject) => {
+      resolve(new Launchpad({
+        midiIn: new LaunchpadDebugMidiIn(),
+        midiOut: new LaunchpadDebugMidiOut()
+      }))
+    })
+  }
+
   return new Promise((resolve, reject) => {
     window.navigator.requestMIDIAccess({ sysex: true }).then((midi) => {
       let launchpadIn, launchpadOut = null;

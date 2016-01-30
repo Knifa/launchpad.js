@@ -17,14 +17,14 @@ class LaunchpadDevice {
   setLed(index, rgb) {
     this.midiOut.send(this.constructor._createSysExMessage(
       consts.SYSEX_CMD_RGB_1,
-      rgb.map((x) => { return x * 63 })
+      rgb.map((x) => { return Math.round(x * 63) })
     ))
   }
 
   setLeds(rgbs) {
     this.midiOut.send(this.constructor._createSysExMessage(
-      consts.SYSEX_CMD_RGB_10X10,
-      rgbs.map((x) => { return x * 63 })
+      consts.SYSEX_CMD_RGB_ALL,
+      [0].concat(rgbs.map((x) => { return Math.round(x * 63) }))
     ))
   }
 

@@ -11,7 +11,7 @@ class Level {
     // eg. patterns[0] is a list of rectangles of COLORS[0]
     this.patterns = [[[]]]
     this.beats = []
-    this.beat_window = 0.10
+    this.beatWindow = consts.BEAT_WINDOW
   }
 
   beatSequence () {
@@ -83,14 +83,14 @@ level4.beats = [consts.BEAT_ONE, consts.BEAT_TWO, consts.BEAT_THREE, consts.BEAT
 
 export class Game {
   constructor () {
-    getLaunchpad().then(this.start.bind(this))
+    getLaunchpad(true).then(this.start.bind(this))
 
     this.pulse = 1
     this.beats = 0
     this.hp = 8
     this.level = null
     this.oldLevels = []
-    this.levels = [/*level1, level2,*/ level3, level4]
+    this.levels = [level1, level2, level3, level4]
     this.event = null
   }
 
@@ -148,7 +148,7 @@ export class Game {
     // Remove sounds which happened before the window
     while (recentSound !== undefined &&
            this.level !== null &&
-           recentSound.time < now - this.level.beat_window) {
+           recentSound.time < now - this.level.beatWindow) {
       recentSound = this.audioScheduler.scheduledSounds.shift()
       if (recentSound !== undefined) {
         this.hpDown()
@@ -157,8 +157,8 @@ export class Game {
 
     this.drawBar = null
     if (recentSound !== undefined && this.level !== null) {
-      var afterWindowStart = now >= recentSound.time - this.level.beat_window
-      var beforeWindowEnd = now <= recentSound.time + this.level.beat_window
+      var afterWindowStart = now >= recentSound.time - this.level.beatWindow
+      var beforeWindowEnd = now <= recentSound.time + this.level.beatWindow
 
       if (afterWindowStart && beforeWindowEnd) {
         this.drawBar = recentSound.sound

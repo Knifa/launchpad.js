@@ -8,11 +8,11 @@ class LaunchpadCanvas {
   constructor(launchpadDevice) {
     this.launchpadDevice = launchpadDevice
 
-    this.canvas = document.createElement('canvas');
+    this.canvas = document.createElement('canvas')
     this.canvas.width = consts.GRID_SIZE;
     this.canvas.height = consts.GRID_SIZE;
 
-    this.ctx = this.canvas.getContext('2d');
+    this.ctx = this.canvas.getContext('2d')
     this.ctx.save()
 
     this.clip()

@@ -1,6 +1,6 @@
 export const SYSEX_HEADER = [240, 0, 32, 41, 2, 16]
 export const SYSEX_FOOTER = [247]
-export const SYSEX_CMD_RGB_10X10 = [15, 0]
+export const SYSEX_CMD_RGB_ALL = [15]
 export const SYSEX_CMD_RGB_1 = [11]
 
 export const GAMMA = 2
