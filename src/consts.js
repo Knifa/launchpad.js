@@ -7,6 +7,7 @@ export const BEAT_ONE = 0
 export const BEAT_TWO = 1
 export const BEAT_THREE = 2
 export const BEAT_FOUR = 3
+export const BEAT_DEFAULT = 4
 
 export const COLORS = [
   '#f0f',
@@ -19,5 +20,6 @@ export const BEATS = [
   'kick',
   'lowTom',
   'highTom',
-  'unknown'
+  'unknown',
+  'defaultBeat'
 ]
