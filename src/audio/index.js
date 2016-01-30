@@ -1,6 +1,8 @@
 export class Audio {
   constructor () {
     this.ctx = new AudioContext()
+
+    this.destination = this.ctx.destination
   }
 }
 
