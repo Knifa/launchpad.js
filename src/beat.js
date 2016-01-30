@@ -4,7 +4,7 @@ import { DrumSynthGraph } from '../audio/synth'
 import * as consts from './consts'
 
 
-export class BeatBox {
+export class AudioScheduler {
   constructor () {
     this.audio = new Audio()
 
