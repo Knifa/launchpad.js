@@ -18,17 +18,19 @@ class Level {
     return this.beats.map(beat => consts.BEATS[beat])
   }
 
-  draw (canvas, sound) {
+  draw (canvas, tutorial, sound) {
     canvas.clip({ pads: true })
     for (let i = 0; i < consts.COLORS.length && i < this.patterns.length; i++) {
-      canvas.ctx.fillStyle = consts.COLORS[i]
-      for (let pattern of this.patterns[i]) {
-        canvas.ctx.fillRect(pattern[0], pattern[1], pattern[2], pattern[3])
+      if (tutorial == 0 || (tutorial == 1 && sound !== null && i === consts.BEATS.indexOf(sound))) {
+        canvas.ctx.fillStyle = consts.COLORS[i]
+        for (let pattern of this.patterns[i]) {
+          canvas.ctx.fillRect(pattern[0], pattern[1], pattern[2], pattern[3])
+        }
       }
     }
 
     canvas.clip({ controls: true })
-    if (sound !== null) {
+    if ((tutorial == 0 || tutorial == 2) && sound !== null) {
       let colorIndex = consts.BEATS.indexOf(sound)
       canvas.ctx.fillStyle = consts.COLORS[colorIndex]
       canvas.ctx.fillRect(0, 0, 10, 1)
@@ -52,7 +54,7 @@ level1.patterns = [
   [[0, 0, 5, 10]],
   [[5, 0, 5, 10]]
 ]
-level1.beats = [consts.BEAT_ONE, consts.BEAT_TWO, consts.BEAT_TWO, consts.BEAT_ONE]
+level1.beats = [consts.BEAT_ONE, consts.BEAT_ONE, consts.BEAT_TWO, consts.BEAT_TWO]
 
 let level2 = new Level()
 level2.patterns = [
@@ -84,25 +86,39 @@ export class Game {
     getLaunchpad().then(this.start.bind(this))
 
     this.pulse = 1
+    this.beats = 0
     this.hp = 8
     this.level = null
     this.oldLevels = []
-    this.levels = [level1, level2, level3, level4]
-    this.levelUp()
+    this.levels = [/*level1, level2,*/ level3, level4]
     this.event = null
   }
 
   start (launchpad) {
     this.launchpad = launchpad
     this.audioScheduler = new AudioScheduler()
-    this.audioScheduler.seq = this.level.beatSequence()
+    this.audioScheduler.callback = this.audioCallback.bind(this)
+    this.levelUp()
 
     this.launchpad.device.events.on('pad-on', this.onPadOn.bind(this))
     this.update()
   }
 
+  audioCallback () {
+    if (this.tutorial == 0) {
+      return
+    }
+    this.beats++
+    if (this.beats >= this.audioScheduler.seq.length * 3) {
+      this.beats = 0
+      this.tutorial = 0
+    } else if (this.beats >= this.audioScheduler.seq.length * 2) {
+      this.tutorial = 2
+    }
+  }
+
   render () {
-    this.level.draw(this.launchpad.canvas, this.drawBar)
+    this.level.draw(this.launchpad.canvas, this.tutorial, this.drawBar)
 
     this.launchpad.canvas.clip({ controls: true })
     this.launchpad.canvas.ctx.fillStyle = 'rgba(255, 255, 255, ' + this.pulse + ')'
@@ -189,6 +205,9 @@ export class Game {
   }
 
   hpDown () {
+    if (this.tutorial) {
+      return
+    }
     this.hp = Math.max(-1, this.hp - 1)
     if (this.hp === -1) {
       this.levelDown()
@@ -196,10 +215,13 @@ export class Game {
   }
 
   hpUp() {
-      this.hp = Math.min(17, this.hp + 1)
-      if (this.hp === 17) {
-        this.levelUp()
-      }
+    if (this.tutorial) {
+      return
+    }
+    this.hp = Math.min(17, this.hp + 1)
+    if (this.hp === 17) {
+      this.levelUp()
+    }
   }
 
   levelDown () {
@@ -207,6 +229,7 @@ export class Game {
     this.level = this.oldLevels.pop()
     this.hp = 8
     this.switchAudio()
+    this.tutorial = 1
   }
 
   levelUp () {
@@ -214,6 +237,7 @@ export class Game {
     this.level = this.levels.shift()
     this.hp = 8
     this.switchAudio()
+    this.tutorial = 1
   }
 
   switchAudio () {

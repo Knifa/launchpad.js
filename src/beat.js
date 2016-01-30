@@ -25,6 +25,7 @@ export class AudioScheduler {
     this.seq = []
     this.seqIndex = 0
     this.scheduledSounds = []
+    this.callback = () => {}
 
     this.interval = window.setInterval(this.update.bind(this), consts.BEAT_DELAY)
   }
@@ -48,5 +49,6 @@ export class AudioScheduler {
       sound: currentSound,
       time: this.audio.ctx.currentTime + consts.AUDIO_DELAY
     })
+    this.callback()
   }
 }
