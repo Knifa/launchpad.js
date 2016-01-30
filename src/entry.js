@@ -158,7 +158,6 @@ export class Game {
       window.requestAnimationFrame(this.update.bind(this))
     } else {
       console.log("no more levels :[")
-      this.audioScheduler.stop()
     }
   }
 
@@ -207,12 +206,22 @@ export class Game {
     this.levels.unshift(this.level)
     this.level = this.oldLevels.pop()
     this.hp = 8
+    this.switchAudio()
   }
 
   levelUp () {
     this.oldLevels.push(this.level)
     this.level = this.levels.shift()
     this.hp = 8
+    this.switchAudio()
+  }
+
+  switchAudio () {
+    if (this.level === null) {
+      this.audioScheduler.stop()
+    } else {
+      this.audioScheduler.seq = this.level.beatSequence()
+    }
   }
 
   onPadOn (event) {
