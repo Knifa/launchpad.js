@@ -1,5 +1,5 @@
-import { Audio } from '../audio'
-import { DrumSynthGraph } from '../audio/synth'
+import { Audio } from './audio'
+import { DrumSynthGraph } from './audio/synth'
 
 import * as consts from './consts'
 

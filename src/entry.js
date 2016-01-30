@@ -1,9 +1,9 @@
 import 'babel-polyfill'
 
-import { getLaunchpad } from '../launchpad'
+import { getLaunchpad } from './launchpad'
 
 import * as consts from './consts'
-import { BeatBox } from './beat'
+import { AudioScheduler } from './beat'
 
 
 export class Game {

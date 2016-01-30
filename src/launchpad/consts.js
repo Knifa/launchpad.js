@@ -13,6 +13,7 @@ export const ANTIALIAS_SAMPLES = [
 export const MIDI_NAME_WINDOWS_IN = 'MIDIIN2 (2- Launchpad Pro)'
 export const MIDI_NAME_WINDOWS_OUT = 'MIDIOUT2 (2- Launchpad Pro)'
 export const MIDI_NAME_OSX = 'Launchpad Pro Standalone Port'
+export const MIDI_NAME_LINUX = 'Launchpad Pro MIDI 2'
 
 export const MIDI_NOTE_ON = 144
 export const MIDI_AFTERTOUCH = 160
