@@ -26,7 +26,11 @@ export class AudioScheduler {
     this.seqIndex = 0
     this.scheduledSounds = []
 
-    window.setInterval(this.update.bind(this), consts.BEAT_DELAY)
+    this.interval = window.setInterval(this.update.bind(this), consts.BEAT_DELAY)
+  }
+
+  stop () {
+    window.clearInterval(this.interval)
   }
 
   update () {

@@ -18,12 +18,20 @@ class Level {
     return this.beats.map(beat => consts.BEATS[beat])
   }
 
-  draw (ctx) {
+  draw (canvas, sound) {
+    canvas.clip({ pads: true })
     for (let i = 0; i < consts.COLORS.length && i < this.patterns.length; i++) {
-      ctx.fillStyle = consts.COLORS[i]
+      canvas.ctx.fillStyle = consts.COLORS[i]
       for (let pattern of this.patterns[i]) {
-        ctx.fillRect(pattern[0], pattern[1], pattern[2], pattern[3])
+        canvas.ctx.fillRect(pattern[0], pattern[1], pattern[2], pattern[3])
       }
+    }
+
+    canvas.clip({ controls: true })
+    if (sound !== null) {
+      let colorIndex = consts.BEATS.indexOf(sound)
+      canvas.ctx.fillStyle = consts.COLORS[colorIndex]
+      canvas.ctx.fillRect(0, 0, 10, 1)
     }
   }
 
@@ -77,7 +85,10 @@ export class Game {
 
     this.pulse = 1
     this.hp = 8
-    this.level = level1
+    this.level = null
+    this.oldLevels = []
+    this.levels = [level1, level2, level3, level4]
+    this.levelUp()
     this.event = null
   }
 
@@ -91,15 +102,16 @@ export class Game {
   }
 
   render () {
-    this.launchpad.canvas.clip({ pads: true })
-
-    this.level.draw(this.launchpad.canvas.ctx)
+    this.level.draw(this.launchpad.canvas, this.drawBar)
 
     this.launchpad.canvas.clip({ controls: true })
     this.launchpad.canvas.ctx.fillStyle = 'rgba(255, 255, 255, ' + this.pulse + ')'
     this.launchpad.canvas.ctx.fillRect(0, 9, 10, 1)
     this.launchpad.canvas.ctx.fillStyle = 'rgba(0, 0, 255, 1)'
-    this.launchpad.canvas.ctx.fillRect(9, 0, 1, this.hp + 1)
+    if (this.hp > 8) {
+      this.launchpad.canvas.ctx.fillRect(9, 0, 1, this.hp - 7)
+    }
+    this.launchpad.canvas.ctx.fillRect(0, 0, 1, this.hp + 1)
 
     this.launchpad.canvas.sync()
     this.launchpad.canvas.clip()
@@ -119,39 +131,52 @@ export class Game {
 
     // Remove sounds which happened before the window
     while (recentSound !== undefined &&
+           this.level !== null &&
            recentSound.time < now - this.level.beat_window) {
       recentSound = this.audioScheduler.scheduledSounds.shift()
       if (recentSound !== undefined) {
-        this.hp--
+        this.hpDown()
+      }
+    }
+
+    this.drawBar = null
+    if (recentSound !== undefined && this.level !== null) {
+      var afterWindowStart = now >= recentSound.time - this.level.beat_window
+      var beforeWindowEnd = now <= recentSound.time + this.level.beat_window
+
+      if (afterWindowStart && beforeWindowEnd) {
+        this.drawBar = recentSound.sound
       }
     }
 
     if (this.event !== null) {
-      this.handlePadOn(now, recentSound)
+      this.handlePadOn(now, afterWindowStart, beforeWindowEnd, recentSound)
       this.event = null
     }
 
-    window.requestAnimationFrame(this.update.bind(this))
+    if (this.level !== null) {
+      window.requestAnimationFrame(this.update.bind(this))
+    } else {
+      console.log("no more levels :[")
+      this.audioScheduler.stop()
+    }
   }
 
-  handlePadOn (now, recentSound) {
-    if (this.audioScheduler.scheduledSounds.length === 0)
+  handlePadOn (now, afterWindowStart, beforeWindowEnd, recentSound) {
+    if (this.level === null || this.audioScheduler.scheduledSounds.length === 0)
       return
-
-    let afterWindowStart = now >= recentSound.time - this.level.beat_window
-    let beforeWindowEnd = now <= recentSound.time + this.level.beat_window
 
     if (afterWindowStart && beforeWindowEnd) {
       if (this.level.hit(recentSound.sound, this.event.key.coord)) {
         console.log('hit', now, recentSound.time)
-        this.hp = Math.min(8, this.hp + 1)
+        this.hpUp()
         this.pulse = 1
         this.audioScheduler.scheduledSounds.shift()
       } else {
         // There is still time to hit the current beat
         console.log('miss1', now, recentSound.time)
         this.pulse = 0
-        this.hp--
+        this.hpDown()
       }
     } else {
       console.log('miss2', now, recentSound.time)
@@ -160,8 +185,34 @@ export class Game {
         this.audioScheduler.scheduledSounds.shift()
       }
       this.pulse = 0
-      this.hp--
+      this.hpDown()
     }
+  }
+
+  hpDown () {
+    this.hp = Math.max(-1, this.hp - 1)
+    if (this.hp === -1) {
+      this.levelDown()
+    }
+  }
+
+  hpUp() {
+      this.hp = Math.min(17, this.hp + 1)
+      if (this.hp === 17) {
+        this.levelUp()
+      }
+  }
+
+  levelDown () {
+    this.levels.unshift(this.level)
+    this.level = this.oldLevels.pop()
+    this.hp = 8
+  }
+
+  levelUp () {
+    this.oldLevels.push(this.level)
+    this.level = this.levels.shift()
+    this.hp = 8
   }
 
   onPadOn (event) {
