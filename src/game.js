@@ -2,7 +2,7 @@ import { getLaunchpad } from './launchpad'
 
 import * as consts from './consts'
 import { AudioScheduler } from './beat'
-import { StatusBar, SyncBar, Pulse } from './utils'
+import { gisAWeeShadowPal, StatusBar, SyncBar, Pulse } from './utils'
 
 import * as levels from './level'
 
@@ -199,6 +199,8 @@ class Game {
       x : 200,
       y: 197
     }
+    this.dias = new Image()
+    this.dias.src = 'img/dias.png'
     this.player.sprite.src = 'img/player_Chanting.png';
     this.player.eyes.src = 'img/player_eyes.png';
     this.priests = []
@@ -238,12 +240,16 @@ class Game {
 
     this.canvas.drawImage(this.player.sprite, this.player.x, this.player.y)
     this.canvas.drawImage(this.player.eyes, this.player.x, this.player.y)
-    this.canvas.save()
+    this.canvas.drawImage(this.dias, 208, 197)
+    gisAWeeShadowPal({ctx: this.canvas, sprite: this.player.sprite, x: this.player.x, y: this.player.y})
+    gisAWeeShadowPal({ctx: this.canvas, sprite: this.player.eyes, x: this.player.x, y: this.player.y})
+    gisAWeeShadowPal({ctx: this.canvas, sprite: this.dias, x: 208, y: 197})
 
     this.syncBar.render()
 
     this.currentState.render()
 
+    this.canvas.save()
     this.launchpad.canvas.sync()
     this.launchpad.canvas.clip()
     this.launchpad.canvas.clear()

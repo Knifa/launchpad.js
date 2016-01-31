@@ -23,6 +23,17 @@ export function RgbaToCss(rgba) {
   }
 }
 
+export function gisAWeeShadowPal({ctx, sprite, x, y}) {
+  ctx.drawImage(sprite, x, y)
+  ctx.save()
+  ctx.translate(0, 100)
+  ctx.scale(1, -1)
+  ctx.globalAlpha = 0.1
+  ctx.drawImage(sprite, x, y - 400)
+
+  ctx.restore()
+}
+
 
 export class StatusBar {
   constructor ({ game, side, startValue, minValue, maxValue, fillStyle }) {
