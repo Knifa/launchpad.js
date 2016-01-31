@@ -16,45 +16,21 @@ class Priest {
 }
 
 
-
-
-class Game {
-  constructor () {
-    getLaunchpad(true).then(this.start.bind(this))
-
-    this.globalPulse = new Pulse()
-    this.failPulse = new Pulse('#f00')
-    this.goPulse = new Pulse('white')
+class StateGameplay {
+  constructor(game) {
+    this.game = game
 
     this.totalBeats = 0
+
+    this.failPulse = new Pulse('#f00')
+    this.goPulse = new Pulse('white')
 
     this.levels = [levels.level1, levels.level2, levels.level3]
     this.levelIndex = 0
     this.level = null
 
-    this.canvas = document.getElementById('theScreen').getContext('2d')
-    this.canvas.imageSmoothingEnabled = false
-    this.canvas.scale(3, 3)
-
-    this.background = new Image()
-    this.background.src = 'img/ritualChamber.png';
-    this.player = {
-      sprite: new Image(),
-      eyes: new Image(),
-      x : 200,
-      y: 197
-    }
-    this.player.sprite.src = 'img/player_Chanting.png';
-    this.player.eyes.src = 'img/player_eyes.png';
-    this.priests = []
-    for (let i = 0; i < 4; i++) {
-      this.priests[i] = new Priest(i * 50)
-    }
-
-    this.event = null
-
     this.hpBar = new StatusBar({
-      game: this,
+      game: this.game,
       side: 'bottom',
       startValue: 16,
       minValue: 0,
@@ -62,7 +38,7 @@ class Game {
       fillStyle: consts.COLOR_HP})
 
     this.levelBar = new StatusBar({
-      game: this,
+      game: this.game,
       side: 'left',
       startValue: 0,
       minValue: 0,
@@ -70,89 +46,62 @@ class Game {
       fillStyle: consts.COLOR_LEVEL})
 
     this.summonBar = new StatusBar({
-        game: this,
-        side: 'right',
-        startValue: 0,
-        minValue: 0,
-        maxValue: 8,
-        fillStyle: consts.COLOR_SUMMON})
-
-    this.syncBar = new SyncBar()
-
-    this.now = null
+      game: this.game,
+      side: 'right',
+      startValue: 0,
+      minValue: 0,
+      maxValue: 8,
+      fillStyle: consts.COLOR_SUMMON})
   }
 
-  start (launchpad) {
-    this.launchpad = launchpad
-    this.launchpad.device.events.on('pad-on', (event) => { this.event = event })
-
-    this.audioScheduler = new AudioScheduler()
-    this.audioScheduler.events.on(
-      'beat-delayed',
-      this._beatDelayedHandler.bind(this))
-
-    this._setLevel(this.levels[0])
-    this.update()
+  enter () {
+    this._setLevel(this.levels[this.levelIndex])
   }
 
-  render () {
-    this.canvas.fillRect(0, 0, 1440, 810)
-    this.canvas.drawImage(this.background, 0, 0)
-    //for (let priest of this.priests) {
-    //  this.canvas.drawImage(priest.sprite, priest.x, priest.y)
-    //}
+  exit () {
 
-    this.canvas.drawImage(this.player.sprite, this.player.x, this.player.y)
-    this.canvas.drawImage(this.player.eyes, this.player.x, this.player.y)
-    this.canvas.save()
-
-    if (this.level)
-      this.level.render()
-
-    this.hpBar.render()
-    this.levelBar.render()
-    this.syncBar.render()
-    this.summonBar.render()
-
-    this.failPulse.render()
-    this.goPulse.render()
-
-    this.launchpad.canvas.sync()
-    this.launchpad.canvas.clip()
-    this.launchpad.canvas.clear()
   }
 
-  update () {
-    this.now = this.audioScheduler.audio.ctx.currentTime
-
-    this._updatePulses()
+  update() {
     this._pruneScheduledSounds()
     this._handlePadOn()
 
-    this.render()
-    window.requestAnimationFrame(this.update.bind(this))
+    this.failPulse.update()
+    this.goPulse.update()
+  }
+
+  render() {
+    this.hpBar.render()
+    this.levelBar.render()
+    this.summonBar.render()
+
+    this.level.render()
+    this.failPulse.render()
+    this.goPulse.render()
   }
 
   _handlePadOn () {
-    let event = this.event
-    this.event = null
+    let event = this.game.event
+    this.game.event = null
 
     if (!event || this.level === null || this._inTutorial())
       return
 
-    if (this.audioScheduler.scheduledSounds.length === 0) {
+    if (this.game.audioScheduler.scheduledSounds.length === 0) {
       this._missedBeat()
       return
     }
 
-    let recentSound = this.audioScheduler.scheduledSounds[0]
-    let afterWindowStart = this.now >= recentSound.time - consts.BEAT_WINDOW
-    let beforeWindowEnd = this.now <= recentSound.time + consts.BEAT_WINDOW
+    let recentSound = this.game.audioScheduler.scheduledSounds[0]
+    let afterWindowStart =
+      this.game.now >= recentSound.time - consts.BEAT_WINDOW
+    let beforeWindowEnd =
+      this.game.now <= recentSound.time + consts.BEAT_WINDOW
 
     if (afterWindowStart && beforeWindowEnd) {
       if (this.level.hit(recentSound.sound, event.key.coord)) {
         this._hitBeat()
-        this.audioScheduler.scheduledSounds.shift()
+        this.game.audioScheduler.scheduledSounds.shift()
       } else if (recentSound.sound !== null) {
         // There is still time to hit the current beat
         this._missedBeat()
@@ -160,23 +109,12 @@ class Game {
     } else {
       // It is too late to hit the current beat, so remove it
       if (afterWindowStart && !beforeWindowEnd) {
-        this.audioScheduler.scheduledSounds.shift()
+        this.game.audioScheduler.scheduledSounds.shift()
       }
       if (recentSound.sound !== null) {
         this._missedBeat()
       }
     }
-  }
-
-  _beatDelayedHandler (soundColor) {
-    this.globalPulse.trigger()
-
-    this.totalBeats++
-    if (this.totalBeats === this.level.beats.length * consts.TUTORIAL_BARS) {
-      this.goPulse.trigger()
-    }
-
-    this.syncBar.color = soundColor
   }
 
   _hitBeat () {
@@ -195,19 +133,13 @@ class Game {
     this.failPulse.trigger()
   }
 
-  _updatePulses() {
-    this.globalPulse.update()
-    this.failPulse.update()
-    this.goPulse.update()
-  }
-
   _pruneScheduledSounds () {
-    let recentSound = this.audioScheduler.scheduledSounds[0]
+    let recentSound = this.game.audioScheduler.scheduledSounds[0]
 
     while (recentSound !== undefined &&
            this.level !== null &&
-           this.now > recentSound.time + consts.BEAT_WINDOW) {
-      recentSound = this.audioScheduler.scheduledSounds.shift()
+           this.game.now > recentSound.time + consts.BEAT_WINDOW) {
+      recentSound = this.game.audioScheduler.scheduledSounds.shift()
       if (recentSound !== null &&
           recentSound !== undefined
           && !this._inTutorial()) {
@@ -234,8 +166,106 @@ class Game {
     if (this.level === undefined) {
 
     } else {
-      this.audioScheduler.seq = this.level.beats
+      this.game.audioScheduler.seq = this.level.beats
     }
+  }
+
+  _beatDelayedHandler (soundColor) {
+    this.totalBeats++
+    if (this.totalBeats === this.level.beats.length * consts.TUTORIAL_BARS) {
+      this.goPulse.trigger()
+    }
+  }
+}
+
+
+class Game {
+  constructor () {
+    getLaunchpad(true).then(this.start.bind(this))
+
+    this.globalPulse = new Pulse()
+
+    this.totalBeats = 0
+
+    this.canvas = document.getElementById('theScreen').getContext('2d')
+    this.canvas.imageSmoothingEnabled = false
+    this.canvas.scale(3, 3)
+
+    this.background = new Image()
+    this.background.src = 'img/ritualChamber.png';
+    this.player = {
+      sprite: new Image(),
+      eyes: new Image(),
+      x : 200,
+      y: 197
+    }
+    this.player.sprite.src = 'img/player_Chanting.png';
+    this.player.eyes.src = 'img/player_eyes.png';
+    this.priests = []
+    for (let i = 0; i < 4; i++) {
+      this.priests[i] = new Priest(i * 50)
+    }
+
+    this.syncBar = new SyncBar()
+
+    this.states = {}
+    this.states[consts.STATE_GAMEPLAY] = new StateGameplay(this)
+    this.currentState = this.states[consts.STATE_GAMEPLAY]
+
+    this.now = null
+    this.event = null
+  }
+
+  start (launchpad) {
+    this.launchpad = launchpad
+    this.launchpad.device.events.on('pad-on', (event) => { this.event = event })
+
+    this.audioScheduler = new AudioScheduler()
+    this.audioScheduler.events.on(
+      'beat-delayed',
+      this._beatDelayedHandler.bind(this))
+
+    this.currentState.enter()
+    this.update()
+  }
+
+  render () {
+    this.canvas.fillRect(0, 0, 1440, 810)
+    this.canvas.drawImage(this.background, 0, 0)
+    //for (let priest of this.priests) {
+    //  this.canvas.drawImage(priest.sprite, priest.x, priest.y)
+    //}
+
+    this.canvas.drawImage(this.player.sprite, this.player.x, this.player.y)
+    this.canvas.drawImage(this.player.eyes, this.player.x, this.player.y)
+    this.canvas.save()
+
+    this.syncBar.render()
+
+    this.currentState.render()
+
+    this.launchpad.canvas.sync()
+    this.launchpad.canvas.clip()
+    this.launchpad.canvas.clear()
+  }
+
+  update () {
+    this.now = this.audioScheduler.audio.ctx.currentTime
+
+    this.globalPulse.update()
+
+    this.currentState.update()
+
+    this.render()
+    window.requestAnimationFrame(this.update.bind(this))
+  }
+
+  _beatDelayedHandler (soundColor) {
+    this.globalPulse.trigger()
+    this.syncBar.color = soundColor
+
+    if (this.currentState._beatDelayedHandler)
+      this.currentState._beatDelayedHandler(soundColor)
   }
 }
 

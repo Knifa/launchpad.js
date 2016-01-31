@@ -10,9 +10,10 @@ export const BEAT_3 = 3
 
 export const STATE_OPEN_CUTSCENE = 0
 export const STATE_GAMEPLAY = 1
-export const STATE_BOSS_CUTSCENE = 2
-export const STATE_BOSSPLAY = 3
-export const STATE_CREDITS = 4
+export const STATE_GAMEPLAY_SWITCHING = 2
+export const STATE_BOSS_CUTSCENE = 3
+export const STATE_BOSSPLAY = 4
+export const STATE_CREDITS = 5
 
 export const COLORS = {}
 COLORS[BEAT_0] = '#a0f'
@@ -25,6 +26,3 @@ export const COLOR_LEVEL = '#ff0'
 export const COLOR_SUMMON = '#f0f'
 
 export const TUTORIAL_BARS = 1
-
-export const STATE_SUMMON_LEVEL = 0
-export const STATE_SUMMON_LEVEL_SWITCHING = 1

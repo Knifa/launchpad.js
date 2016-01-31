@@ -56,21 +56,21 @@ export class AudioScheduler {
 
   update () {
     this._triggerMetronome()
+    let currentSound = null
 
-    if (this.seq.length === 0)
-      return
+    if (this.seq.length > 0) {
+      currentSound = this.seq[this.seqIndex]
+      this.seqIndex = (this.seqIndex + 1) % this.seq.length
 
-    let currentSound = this.seq[this.seqIndex]
-    this.seqIndex = (this.seqIndex + 1) % this.seq.length
+      if (currentSound !== null) {
+        this.synths[currentSound].trigger()
+        this.scheduledSounds.push({
+          sound: currentSound,
+          time: this.audio.ctx.currentTime + consts.AUDIO_DELAY
+        })
 
-    if (currentSound !== null) {
-      this.synths[currentSound].trigger()
-      this.scheduledSounds.push({
-        sound: currentSound,
-        time: this.audio.ctx.currentTime + consts.AUDIO_DELAY
-      })
-
-      this.events.emit('beat-scheduled')
+        this.events.emit('beat-scheduled')
+      }
     }
 
     this.events.emit('beat-triggered', currentSound)
