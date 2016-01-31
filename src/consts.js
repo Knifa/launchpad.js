@@ -28,3 +28,4 @@ export const COLOR_SUMMON = '#f0f'
 export const TUTORIAL_BARS = 2
 export const COMPLETE_BARS = 2
 export const SWITCH_BARS = 2
+export const BOSS_BARS = 1

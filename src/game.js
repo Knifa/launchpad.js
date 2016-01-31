@@ -35,6 +35,9 @@ class StateGameplay {
     this.switchingFade = 0
     this.switchingIntro = true
 
+    this.bossLasers = []
+    this.yourLasers = []
+
     this.hpBar = new StatusBar({
       game: this.game,
       side: 'bottom',
@@ -88,7 +91,9 @@ class StateGameplay {
     this.levelBar.render()
     this.summonBar.render()
 
-    this.level.render()
+    if (this.level)
+      this.level.render()
+
     this.failPulse.render()
     this.goPulse.render()
 
@@ -184,7 +189,7 @@ class StateGameplay {
     this.totalBeats = 0
 
     this.levelBar.value = 0
-    this.levelBar.maxValue = this.level.beats.length
+    this.levelBar.maxValue = this.level ? this.level.beats.length : 8
 
     if (this.level === undefined) {
       // sssh
@@ -198,6 +203,8 @@ class StateGameplay {
 
   _beatDelayedHandler (soundColor) {
     this.totalBeats++
+    if (!this.level)
+      return
 
     if (this.switchingIntro) {
       if (this.totalBeats % this.level.beats.length * consts.SWITCH_BARS === 0) {
@@ -221,9 +228,109 @@ class StateGameplay {
 }
 
 
+class StateBossGameplay extends StateGameplay {
+  constructor (game) {
+    super(game)
+
+    this.levels = [levels.bossLevel1]
+
+    this.failPulse = new Pulse('#f00')
+    this.goPulse = new Pulse('white')
+
+    this.hpBar = new StatusBar({
+      game: this.game,
+      side: 'bottom',
+      startValue: 16,
+      minValue: 0,
+      maxValue: 16,
+      fillStyle: consts.COLOR_HP})
+
+    this.levelBar = new StatusBar({
+      game: this.game,
+      side: 'left',
+      startValue: 0,
+      minValue: 0,
+      maxValue: 8,
+      fillStyle: consts.COLOR_LEVEL})
+
+    this.summonBar.value = this.summonBar.maxValue
+  }
+
+  enter () {
+    this._setLevel(this.levels[this.levelIndex])
+    this._updateAudioSchedulerSequence()
+    this.game.background.src = 'img/bossEncounter.png'
+  }
+
+  update() {
+    this._pruneScheduledSounds()
+    this._handlePadOn()
+
+    this.failPulse.update()
+    this.goPulse.update()
+
+    let remainingBossLasers = []
+    for (let bossLaser of this.bossLasers) {
+      bossLaser.val -= 0.1
+      if (bossLaser.val > 0)
+        remainingBossLasers.push(bossLaser)
+    }
+    this.bossLasers = remainingBossLasers
+  }
+
+  render() {
+    this.hpBar.render()
+    this.levelBar.render()
+    this.summonBar.render()
+
+    this.level.render()
+    this.failPulse.render()
+    this.goPulse.render()
+
+    this.game.canvas.globalCompositeOperation = 'lighter'
+    for (let bossLaser of this.bossLasers) {
+      let style1 = tinycolor(consts.COLORS[bossLaser.color]).setAlpha(0.8)
+      let style2 = tinycolor(consts.COLORS[bossLaser.color]).darken(10).setAlpha(0.8)
+
+      this.game.canvas.strokeStyle = style2
+      this.game.canvas.lineWidth = bossLaser.val * 32
+      this.game.canvas.beginPath()
+      this.game.canvas.moveTo(100, 100)
+      this.game.canvas.lineTo(400, 400)
+      this.game.canvas.stroke()
+      this.game.canvas.closePath()
+
+      this.game.canvas.strokeStyle = style1
+      this.game.canvas.lineWidth = bossLaser.val * 16
+      this.game.canvas.beginPath()
+      this.game.canvas.moveTo(100, 100)
+      this.game.canvas.lineTo(400, 400)
+      this.game.canvas.stroke()
+      this.game.canvas.closePath()
+    }
+    this.game.canvas.globalCompositeOperation = 'source-over'
+  }
+
+  _beatDelayedHandler (soundColor) {
+    this.totalBeats++
+
+    if (soundColor != undefined) {
+      this.bossLasers.push({
+        color: soundColor,
+        val: 1
+      })
+    }
+
+    if (this.totalBeats === this.level.beats.length * consts.BOSS_BARS) {
+      this.goPulse.trigger()
+    }
+  }
+}
+
+
 class Game {
   constructor () {
-    getLaunchpad(false).then(this.start.bind(this))
+    getLaunchpad(true).then(this.start.bind(this))
 
     this.globalPulse = new Pulse()
 
@@ -254,7 +361,8 @@ class Game {
 
     this.states = {}
     this.states[consts.STATE_GAMEPLAY] = new StateGameplay(this)
-    this.currentState = this.states[consts.STATE_GAMEPLAY]
+    this.states[consts.STATE_BOSSPLAY] = new StateBossGameplay(this)
+    this.currentState = this.states[consts.STATE_BOSSPLAY]
 
     this.now = null
     this.event = null
