@@ -9,7 +9,7 @@ export class DelayGraph {
     this.delayNode = audio.ctx.createDelay()
     this.delayNode.delayTime.value = 0.33
 
-    this.gainNodeDelay.gain.value = 0.33
+    this.gainNodeDelay.gain.value = 0.1
 
     this.gainNodeIn.connect(this.gainNodeOut)
     this.gainNodeIn.connect(this.gainNodeDelay)

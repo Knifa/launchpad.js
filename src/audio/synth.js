@@ -8,11 +8,20 @@ export class SynthGraph {
     this.osc = this.audio.ctx.createOscillator()
     this.osc.type = 'triangle'
     this.osc.frequency.value = 100
+    this.osc.detune.value = -1215
+
+    this.osc2 = this.audio.ctx.createOscillator()
+    this.osc2.type = 'triangle'
+    this.osc2.frequency.value = 100
+    this.osc2.detune.value = 15
 
     this.adsr = new ADSRGraph(this.audio)
 
     this.osc.connect(this.adsr.destination)
     this.osc.start()
+
+    this.osc2.connect(this.adsr.destination)
+    this.osc2.start()
   }
 
   connect(destNode) {

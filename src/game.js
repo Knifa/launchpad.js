@@ -1,3 +1,5 @@
+import tinycolor from 'tinycolor2'
+
 import { getLaunchpad } from './launchpad'
 
 import * as consts from './consts'
@@ -29,6 +31,10 @@ class StateGameplay {
     this.levelIndex = 0
     this.level = null
 
+    this.switchingLevel = false
+    this.switchingFade = 0
+    this.switchingIntro = true
+
     this.hpBar = new StatusBar({
       game: this.game,
       side: 'bottom',
@@ -42,7 +48,7 @@ class StateGameplay {
       side: 'left',
       startValue: 0,
       minValue: 0,
-      maxValue: 16,
+      maxValue: 8,
       fillStyle: consts.COLOR_LEVEL})
 
     this.summonBar = new StatusBar({
@@ -63,8 +69,15 @@ class StateGameplay {
   }
 
   update() {
-    this._pruneScheduledSounds()
-    this._handlePadOn()
+    if (!this.switchingLevel) {
+      this._pruneScheduledSounds()
+      this._handlePadOn()
+    } else {
+      this.switchingFade += 0.01
+      if (this.switchingFade >= 1) {
+        this.switchingFade = 1
+      }
+    }
 
     this.failPulse.update()
     this.goPulse.update()
@@ -78,6 +91,14 @@ class StateGameplay {
     this.level.render()
     this.failPulse.render()
     this.goPulse.render()
+
+    if (this.switchingLevel) {
+      let fillStyle = tinycolor('black').setAlpha(this.switchingFade)
+
+      this.game.launchpad.canvas.clip({ pads: true })
+      this.game.launchpad.canvas.ctx.fillStyle = fillStyle.toString()
+      this.game.launchpad.canvas.ctx.fillRect(0, 0, 10, 10)
+    }
   }
 
   _handlePadOn () {
@@ -118,12 +139,12 @@ class StateGameplay {
   }
 
   _hitBeat () {
-    let oldLevelVal = this.levelBar.value
-    this.levelBar.value += 2
+    this.levelBar.value++
 
-    if (this.levelBar.value == this.levelBar.maxValue &&
-        oldLevelVal == this.levelBar.value) {
-      this._nextLevel()
+    if (this.levelBar.value == this.levelBar.maxValue) {
+      this.switchingLevel = true
+      this.switchingFade = 0
+      this.game.audioScheduler.seq = []
     }
   }
 
@@ -155,25 +176,46 @@ class StateGameplay {
   _nextLevel () {
     this._setLevel(this.levels[++this.levelIndex])
     this.summonBar.value++
-    this.audioScheduler.stop()
+    this.switchingIntro = true
   }
 
   _setLevel(level) {
     this.level = level
     this.totalBeats = 0
+
     this.levelBar.value = 0
+    this.levelBar.maxValue = this.level.beats.length
 
     if (this.level === undefined) {
-
-    } else {
-      this.game.audioScheduler.seq = this.level.beats
+      // sssh
     }
+  }
+
+  _updateAudioSchedulerSequence() {
+    this.game.audioScheduler.seq = this.level.beats
+    this.game.audioScheduler.seqIndex = 0
   }
 
   _beatDelayedHandler (soundColor) {
     this.totalBeats++
-    if (this.totalBeats === this.level.beats.length * consts.TUTORIAL_BARS) {
-      this.goPulse.trigger()
+
+    if (this.switchingIntro) {
+      if (this.totalBeats % this.level.beats.length * consts.SWITCH_BARS === 0) {
+        this._updateAudioSchedulerSequence()
+        this.switchingIntro = false;
+        this.totalBeats = 0
+      }
+    } else if (this.switchingLevel) {
+      if (this.totalBeats % this.level.beats.length * consts.SWITCH_BARS === 0
+          && this.switchingFade === 1) {
+        this._nextLevel()
+        this.switchingLevel = false
+        this.switchingFade = 0
+      }
+    } else {
+      if (this.totalBeats === this.level.beats.length * consts.TUTORIAL_BARS) {
+        this.goPulse.trigger()
+      }
     }
   }
 }
@@ -181,7 +223,7 @@ class StateGameplay {
 
 class Game {
   constructor () {
-    getLaunchpad(true).then(this.start.bind(this))
+    getLaunchpad(false).then(this.start.bind(this))
 
     this.globalPulse = new Pulse()
 
@@ -253,7 +295,6 @@ class Game {
     this.now = this.audioScheduler.audio.ctx.currentTime
 
     this.globalPulse.update()
-
     this.currentState.update()
 
     this.render()
