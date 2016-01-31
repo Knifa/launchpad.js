@@ -45,6 +45,54 @@ class Priest {
   }
 }
 
+class Symbol {
+  constructor(index) {
+    this.index = index
+    this.sprite = new Image()
+    this.sprite.src = 'img/ritualChamber_symbols_' + (index + 1) + '.png'
+  }
+}
+
+class StateBossCutscene {
+  constructor (game) {
+    this.game = game
+    this.lastTime = null
+    this.currentImage = 0
+    this.images = []
+    for (let i = 1; i <= 15; i++) {
+      let image = new Image()
+      if (i < 10) {
+        image.src = 'img/cutscene/cutscene_0' + i + '.png'
+      } else {
+        image.src = 'img/cutscene/cutscene_' + i + '.png'
+      }
+      this.images.push(image)
+    }
+
+    game.canvas.drawImage(this.images[this.currentImage], 0, 0)
+  }
+
+  enter () {}
+  exit () {}
+  update () {
+    if (this.lastTime === null) {
+      this.lastTime = this.game.now
+    }
+    if (this.lastTime + 3 <= this.game.now) {
+      if (this.currentImage == 15) {
+        this.game.nextState()
+      } else {
+        this.currentImage++
+        this.lastTime = this.game.now
+      }
+    }
+  }
+
+  render () {
+    game.canvas.drawImage(this.images[this.currentImage], 0, 0)
+  }
+}
+
 class StateGameplay {
   constructor(game) {
     this.game = game
@@ -88,6 +136,12 @@ class StateGameplay {
       this.priests[i] = new Priest(i)
     }
 
+    this.symbolIndex = 0
+    this.symbols = []
+    for (let i = 0; i < 4; i ++) {
+      this.symbols.push(new Symbol(i))
+    }
+
     this.hpBar = new StatusBar({
       game: this.game,
       side: 'bottom',
@@ -109,7 +163,7 @@ class StateGameplay {
       side: 'right',
       startValue: 0,
       minValue: 0,
-      maxValue: 8,
+      maxValue: 4,
       fillStyle: consts.COLOR_SUMMON})
   }
 
@@ -164,6 +218,10 @@ class StateGameplay {
 
     for (let priest of this.priests) {
       priest.render()
+    }
+
+    for (let i = 0; i < this.symbolIndex; i++) {
+      game.canvas.drawImage(this.symbols[i].sprite, 0, 0)
     }
 
     if (this.switchingLevel) {
@@ -226,6 +284,7 @@ class StateGameplay {
   _missedBeat () {
     this.hpBar.value--
     this.levelBar.value--
+    this.doorGlow.zenith = 246 * (this.levelBar.value / this.levelBar.maxValue)
     this.failPulse.trigger()
   }
 
@@ -251,6 +310,7 @@ class StateGameplay {
   _nextLevel () {
     this._setLevel(this.levels[++this.levelIndex])
     this.summonBar.value++
+    this.symbolIndex++
     this.switchingIntro = true
   }
 
@@ -260,6 +320,8 @@ class StateGameplay {
 
     this.levelBar.value = 0
     this.levelBar.maxValue = this.level ? this.level.beats.length : 8
+    this.doorGlow.zenith = 0
+    this.levelBar.maxValue = this.level.beats.length
 
     if (this.level === undefined) {
       // sssh
@@ -329,6 +391,9 @@ class StateBossGameplay extends StateGameplay {
     this.background = new Image()
     this.background.src = 'img/bossEncounter.png';
 
+    this.island = new Image()
+    this.island.src = 'img/floatingRock.png';
+
     this.player = new Image()
     this.player.src = 'img/player_Staff.png';
 
@@ -353,6 +418,9 @@ class StateBossGameplay extends StateGameplay {
     this.boss.crystals[consts.BEAT_3].src = 'img/boss_crystal_y.png'
 
     this.intro = true
+
+    this.shake = 0
+    this.shakeTheta = 0
   }
 
   enter () {
@@ -376,10 +444,16 @@ class StateBossGameplay extends StateGameplay {
     }
     this.bossLasers = remainingBossLasers
 
-    this.bossTheta += this.game.globalPulse.value * 0.1
+    this.bossTheta += Math.pow(this.game.globalPulse.value, 2) * 0.25
+    this.shake -= 0.066
+    if (this.shake < 0)
+      this.shake = 0
   }
 
   render() {
+    let shakeX = Math.random() * 8 * Math.pow(this.shake, 2) - 2
+    let shakeY = Math.random() * 8 * Math.pow(this.shake, 2) - 2
+
     this.hpBar.render()
     this.levelBar.render()
     this.summonBar.render()
@@ -389,12 +463,11 @@ class StateBossGameplay extends StateGameplay {
     this.goPulse.render()
 
     this.game.canvas.clearRect(0, 0, 1440, 810)
-    this.game.canvas.drawImage(this.background, 0, 0)
+    this.game.canvas.drawImage(this.background, 0 + shakeX, 0 + shakeX)
 
-    this.game.canvas.drawImage(this.player, 240, 150)
-    this.game.canvas.drawImage(this.playerEyes, 240, 150)
+    this.game.canvas.drawImage(this.player, 240 + shakeX, 150 + shakeY)
 
-    let bossY = 0 + Math.sin(this.bossTheta) * 2
+    let bossY = 0 + Math.sin(this.bossTheta) * 4
     this.game.canvas.drawImage(this.boss, 340, bossY)
     for (let color in this.boss.crystals) {
       if (color != this.game.syncBar.color)
@@ -404,6 +477,8 @@ class StateBossGameplay extends StateGameplay {
       this.game.canvas.drawImage(crystal, 340, bossY)
     }
 
+    this.game.canvas.drawImage(this.island, 250 + shakeX, 5 - (bossY/4) + shakeY)
+    this.game.canvas.drawImage(this.playerEyes, 240 + shakeX, 150 + (bossY/10) + shakeY)
 
     this.game.canvas.globalCompositeOperation = 'lighter'
     for (let bossLaser of this.bossLasers) {
@@ -428,16 +503,17 @@ class StateBossGameplay extends StateGameplay {
         break
 
         case consts.BEAT_2:
-          endX += 32
-          endY -= 24
+          endX -= 40
+          endY -= 40
         break
 
         case consts.BEAT_3:
-          endX -= 32
-          endY -= 24
+          endX += 40
+          endY -= 40
         break
       }
 
+      this.game.canvas.lineCap="round"
       this.game.canvas.strokeStyle = style2
       this.game.canvas.lineWidth = bossLaser.val * 32
       this.game.canvas.beginPath()
@@ -498,6 +574,7 @@ class StateBossGameplay extends StateGameplay {
   _missedBeat () {
     this.hpBar.value--
     this.failPulse.trigger()
+    this.shake = 1
   }
 
   _nextLevel () {
@@ -541,7 +618,9 @@ class Game {
     this.states = {}
     this.states[consts.STATE_GAMEPLAY] = new StateGameplay(this)
     this.states[consts.STATE_BOSSPLAY] = new StateBossGameplay(this)
-    this.currentState = this.states[consts.STATE_BOSSPLAY]
+    this.states[consts.STATE_BOSS_CUTSCENE] = new StateBossCutscene(this)
+    this._state = consts.STATE_BOSSPLAY
+    this.currentState = this.states[this._state]
 
     this.now = null
     this.event = null
@@ -569,6 +648,15 @@ class Game {
     this.launchpad.canvas.sync()
     this.launchpad.canvas.clip()
     this.launchpad.canvas.clear()
+  }
+
+  nextState () {
+    switch (this._state) {
+      case consts.STATE_GAMEPLAY:
+        this._state = consts.STATE_BOSS_CUTSCENE
+        break;
+    }
+    this.currentState = this.states[this._state]
   }
 
   update () {
