@@ -3,6 +3,7 @@ import tinycolor from 'tinycolor2'
 
 import { game } from './game'
 import * as consts from './consts'
+import { gisAWeeShadowPal } from './utils'
 
 
 export class Region {
@@ -35,7 +36,13 @@ export class Region {
       this.x, this.y, this.width, this.height)
 
     let priest = game.priests[this.beat]
-    game.canvas.drawImage(priest.sprite, priest.x, priest.y - (Math.sin(Math.PI * game.globalPulse) * 15))
+    if (this.beat == game.syncBar.color) {
+      var y = priest.y - (Math.sin(Math.PI * game.globalPulse.value) * 15)
+    } else {
+      var y = priest.y
+    }
+    game.canvas.drawImage(priest.sprite, priest.x, y)
+    gisAWeeShadowPal({ ctx: game.canvas, sprite: priest.sprite, x: priest.x, y: y})
   }
 
   inRegion (coord) {
