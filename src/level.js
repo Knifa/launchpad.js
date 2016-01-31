@@ -167,6 +167,108 @@ level3.beats = [
   null
 ]
 
+export let level4 = new Level()
+
+level4.regions = [
+  new Region(
+    1, 1,
+    2, 2,
+    consts.BEAT_0
+  ),
+  new Region(
+    3, 1,
+    2, 2,
+    consts.BEAT_1
+  ),
+  new Region(
+    5, 1,
+    2, 2,
+    consts.BEAT_2
+  ),
+  new Region(
+    7, 1,
+    2, 2,
+    consts.BEAT_3
+  ),
+
+  new Region(
+    1, 3,
+    2, 2,
+    consts.BEAT_1
+  ),
+  new Region(
+    3, 3,
+    2, 2,
+    consts.BEAT_2
+  ),
+  new Region(
+    5, 3,
+    2, 2,
+    consts.BEAT_3
+  ),
+  new Region(
+    7, 3,
+    2, 2,
+    consts.BEAT_0
+  ),
+
+  new Region(
+    1, 5,
+    2, 2,
+    consts.BEAT_2
+  ),
+  new Region(
+    3, 5,
+    2, 2,
+    consts.BEAT_3
+  ),
+  new Region(
+    5, 5,
+    2, 2,
+    consts.BEAT_0
+  ),
+  new Region(
+    7, 5,
+    2, 2,
+    consts.BEAT_1
+  ),
+
+  new Region(
+    1, 7,
+    2, 2,
+    consts.BEAT_3
+  ),
+  new Region(
+    3, 7,
+    2, 2,
+    consts.BEAT_0
+  ),
+  new Region(
+    5, 7,
+    2, 2,
+    consts.BEAT_1
+  ),
+  new Region(
+    7, 7,
+    2, 2,
+    consts.BEAT_2
+  )
+]
+
+level4.beats = [
+  consts.BEAT_0,
+  consts.BEAT_1,
+  consts.BEAT_2,
+  consts.BEAT_3,
+  null,
+  null,
+  consts.BEAT_1,
+  consts.BEAT_2,
+  consts.BEAT_1,
+  consts.BEAT_3,
+  null,
+  null
+]
 
 export let bossLevel1 = new Level(400)
 

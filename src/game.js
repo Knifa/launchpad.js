@@ -77,19 +77,67 @@ class StateBossCutscene {
   update () {
     if (this.lastTime === null) {
       this.lastTime = this.game.now
+      game.canvas.save()
+      game.canvas.scale(1.05, 1.05)
     }
     if (this.lastTime + 3 <= this.game.now) {
+      game.canvas.restore()
       if (this.currentImage >= this.images.length - 1) {
         this.game.nextState()
       } else {
         this.currentImage++
         this.lastTime = this.game.now
+        game.canvas.save()
+        game.canvas.scale(1.05, 1.05)
       }
+    } else {
+      game.canvas.scale(0.9996, 0.9996)
     }
   }
 
   render () {
     game.canvas.drawImage(this.images[this.currentImage], 0, 0)
+  }
+}
+
+class StateOpenCutscene {
+  constructor (game) {
+    this.game = game
+    this.lastTime = null
+    this.image = new Image()
+    this.image.src = 'img/titleScreen.png';
+  }
+
+  enter () {}
+  exit () {}
+  update () {
+    if (this.lastTime === null) {
+      this.lastTime = this.game.now
+    }
+    if (this.lastTime + 5 <= this.game.now) {
+      this.game.nextState()
+    }
+  }
+
+  render () {
+    game.canvas.drawImage(this.image, 0, 0)
+  }
+}
+
+class StateCredits {
+  constructor (game) {
+    this.game = game
+    this.image = new Image()
+    this.image.src = 'img/creditsScreen.png'
+  }
+
+  enter () {}
+  exit () {}
+  update () {
+  }
+
+  render () {
+    game.canvas.drawImage(this.image, 0, 0)
   }
 }
 
@@ -102,7 +150,7 @@ class StateGameplay {
     this.failPulse = new Pulse('#f00')
     this.goPulse = new Pulse('white')
 
-    this.levels = [levels.level1]
+    this.levels = [levels.level1, levels.level2, levels.level3, levels.level4]
     this.levelIndex = 0
     this.level = null
 
@@ -194,7 +242,6 @@ class StateGameplay {
     this.hpBar.render()
     this.levelBar.render()
     this.summonBar.render()
-
 
     game.canvas.fillRect(0, 0, 1440, 810)
     game.canvas.drawImage(this.background, 0, 0)
@@ -657,7 +704,7 @@ class StateBossGameplay extends StateGameplay {
 
 class Game {
   constructor () {
-    getLaunchpad(true).then(this.start.bind(this))
+    getLaunchpad(false).then(this.start.bind(this))
 
     this.globalPulse = new Pulse()
 
@@ -670,10 +717,12 @@ class Game {
     this.syncBar = new SyncBar()
 
     this.states = {}
+    this.states[consts.STATE_OPEN_CUTSCENE] = new StateOpenCutscene(this)
     this.states[consts.STATE_GAMEPLAY] = new StateGameplay(this)
     this.states[consts.STATE_BOSSPLAY] = new StateBossGameplay(this)
     this.states[consts.STATE_BOSS_CUTSCENE] = new StateBossCutscene(this)
-    this._state = consts.STATE_BOSSPLAY
+    this.states[consts.STATE_CREDITS] = new StateCredits(this)
+    this._state = consts.STATE_OPEN_CUTSCENE
     this.currentState = this.states[this._state]
 
     this.now = null
@@ -698,7 +747,6 @@ class Game {
 
     this.currentState.render()
 
-    this.canvas.save()
     this.launchpad.canvas.sync()
     this.launchpad.canvas.clip()
     this.launchpad.canvas.clear()
@@ -706,13 +754,21 @@ class Game {
 
   nextState () {
     switch (this._state) {
+      case consts.STATE_OPEN_CUTSCENE:
+        this._state = consts.STATE_GAMEPLAY
+        break
+
       case consts.STATE_GAMEPLAY:
         this._state = consts.STATE_BOSS_CUTSCENE
-        break;
+        break
 
       case consts.STATE_BOSS_CUTSCENE:
         this._state = consts.STATE_BOSSPLAY
-        break;
+        break
+
+      case consts.STATE_BOSSPLAY:
+        this._state = consts.STATE_CREDITS
+        break
     }
     this.currentState = this.states[this._state]
     if (this.currentState.enter) {
