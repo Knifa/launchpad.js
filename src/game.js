@@ -79,7 +79,7 @@ class StateBossCutscene {
       this.lastTime = this.game.now
     }
     if (this.lastTime + 3 <= this.game.now) {
-      if (this.currentImage == 15) {
+      if (this.currentImage >= this.images.length - 1) {
         this.game.nextState()
       } else {
         this.currentImage++
@@ -102,7 +102,7 @@ class StateGameplay {
     this.failPulse = new Pulse('#f00')
     this.goPulse = new Pulse('white')
 
-    this.levels = [levels.level1, levels.level2, levels.level3]
+    this.levels = [levels.level1]
     this.levelIndex = 0
     this.level = null
 
@@ -308,6 +308,11 @@ class StateGameplay {
   }
 
   _nextLevel () {
+    if (this.level == this.levels.slice(-1)[0]) {
+      this.game.nextState()
+      return
+    }
+
     this._setLevel(this.levels[++this.levelIndex])
     this.summonBar.value++
     this.symbolIndex++
@@ -364,7 +369,7 @@ class StateBossGameplay extends StateGameplay {
   constructor (game) {
     super(game)
 
-    this.levels = [levels.bossLevel1, levels.bossLevel2]
+    this.levels = [levels.bossLevel1]
 
     this.failPulse = new Pulse('#f00')
     this.goPulse = new Pulse('white')
@@ -402,6 +407,7 @@ class StateBossGameplay extends StateGameplay {
 
     this.boss = new Image()
     this.bossTheta = 0
+    this.bossMul = 1
     this.boss.src = 'img/boss_base.png'
 
     this.boss.crystals = {}
@@ -421,6 +427,9 @@ class StateBossGameplay extends StateGameplay {
 
     this.shake = 0
     this.shakeTheta = 0
+
+    this.won = false
+    this.whiteFade = 0
   }
 
   enter () {
@@ -428,9 +437,18 @@ class StateBossGameplay extends StateGameplay {
   }
 
   update() {
-    if (!this.intro) {
+    if (!this.intro && !this.won) {
       this._pruneScheduledSounds()
       this._handlePadOn()
+    }
+
+    if (this.won) {
+      this.whiteFade += 0.005
+      this.bossMul += 0.1
+
+      if (this.whiteFade >= 1) {
+        // CHANGE TO THE CREDITS
+      }
     }
 
     this.failPulse.update()
@@ -458,7 +476,9 @@ class StateBossGameplay extends StateGameplay {
     this.levelBar.render()
     this.summonBar.render()
 
-    this.level.render()
+    if (this.level)
+      this.level.render()
+
     this.failPulse.render()
     this.goPulse.render()
 
@@ -468,13 +488,19 @@ class StateBossGameplay extends StateGameplay {
     this.game.canvas.drawImage(this.player, 240 + shakeX, 150 + shakeY)
 
     let bossY = 0 + Math.sin(this.bossTheta) * 4
-    this.game.canvas.drawImage(this.boss, 340, bossY)
+    let bossYReal = 0 + Math.sin(this.bossTheta) * 4 * this.bossMul
+    let bossX = 0
+    if (this.won) {
+      bossX = Math.random() * this.bossMul
+      bossYReal += Math.random() * this.bossMul
+    }
+    this.game.canvas.drawImage(this.boss, 340 + bossX, bossYReal)
     for (let color in this.boss.crystals) {
       if (color != this.game.syncBar.color)
         continue
 
       let crystal = this.boss.crystals[color]
-      this.game.canvas.drawImage(crystal, 340, bossY)
+      this.game.canvas.drawImage(crystal, 340, bossYReal)
     }
 
     this.game.canvas.drawImage(this.island, 250 + shakeX, 5 - (bossY/4) + shakeY)
@@ -531,10 +557,22 @@ class StateBossGameplay extends StateGameplay {
       this.game.canvas.closePath()
     }
     this.game.canvas.globalCompositeOperation = 'source-over'
+
+    if (this.won) {
+      this.game.canvas.fillStyle = tinycolor('white').setAlpha(this.whiteFade).toString()
+      this.game.canvas.fillRect(0, 0, 1920, 1080)
+
+      this.game.launchpad.canvas.clip()
+      this.game.launchpad.canvas.ctx.fillStyle = tinycolor('white').setAlpha(this.whiteFade).toString()
+      this.game.launchpad.canvas.ctx.fillRect(0, 0, 10, 10)
+    }
   }
 
   _beatDelayedHandler (soundColor) {
     this.totalBeats++
+
+    if (this.won)
+      return
 
     if (soundColor != undefined) {
       this.bossLasers.push({
@@ -542,6 +580,7 @@ class StateBossGameplay extends StateGameplay {
         val: 1
       })
     }
+
 
     if (this.intro && this.totalBeats === this.level.beats.length / 2) {
       this.intro = false
@@ -578,6 +617,11 @@ class StateBossGameplay extends StateGameplay {
   }
 
   _nextLevel () {
+    if (this.level == this.levels.slice(-1)[0]) {
+      this.won = true
+      this.game.audioScheduler.seq = []
+    }
+
     this._setLevel(this.levels[++this.levelIndex])
     this.intro = true
     this.totalBeats = 0
@@ -591,9 +635,11 @@ class StateBossGameplay extends StateGameplay {
     this.levelBar.value = 0
 
     let beatCount = 0
-    for (let beat of this.level.beats) {
-      if (beat != null)
-        beatCount++
+    if (this.level) {
+      for (let beat of this.level.beats) {
+        if (beat != null)
+          beatCount++
+      }
     }
 
     this.levelBar.maxValue = beatCount
@@ -655,8 +701,15 @@ class Game {
       case consts.STATE_GAMEPLAY:
         this._state = consts.STATE_BOSS_CUTSCENE
         break;
+
+      case consts.STATE_BOSS_CUTSCENE:
+        this._state = consts.STATE_BOSSPLAY
+        break;
     }
     this.currentState = this.states[this._state]
+    if (this.currentState.enter) {
+      this.currentState.enter()
+    }
   }
 
   update () {
