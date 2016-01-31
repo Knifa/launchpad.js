@@ -371,7 +371,7 @@ class StateGameplay {
 
   _setLevel(level) {
     this.level = level
-    this.game.audioScheduler.setBeatDelay(level.beatWindow)
+    //this.game.audioScheduler.setBeatDelay(level.beatWindow)
     this.totalBeats = 0
 
     this.levelBar.value = 0
@@ -498,7 +498,7 @@ class StateBossGameplay extends StateGameplay {
       this.bossMul += 0.1
 
       if (this.whiteFade >= 1) {
-        // CHANGE TO THE CREDITS
+        this.game.nextState()
       }
     }
 
@@ -684,7 +684,7 @@ class StateBossGameplay extends StateGameplay {
 
   _setLevel(level) {
     this.level = level
-    this.game.audioScheduler.setBeatDelay(level.beatDelay)
+    //this.game.audioScheduler.setBeatDelay(level.beatDelay)
     this.totalBeats = 0
 
     this.levelBar.value = 0
@@ -704,7 +704,7 @@ class StateBossGameplay extends StateGameplay {
 
 class Game {
   constructor () {
-    getLaunchpad(false).then(this.start.bind(this))
+    getLaunchpad(true).then(this.start.bind(this))
 
     this.globalPulse = new Pulse()
 
