@@ -53,6 +53,46 @@ class Symbol {
   }
 }
 
+class StateBossCutscene {
+  constructor (game) {
+    this.game = game
+    this.lastTime = null
+    this.currentImage = 0
+    this.images = []
+    for (let i = 1; i <= 15; i++) {
+      let image = new Image()
+      if (i < 10) {
+        image.src = 'img/cutscene/cutscene_0' + i + '.png'
+      } else {
+        image.src = 'img/cutscene/cutscene_' + i + '.png'
+      }
+      this.images.push(image)
+    }
+
+    game.canvas.drawImage(this.images[this.currentImage], 0, 0)
+  }
+
+  enter () {}
+  exit () {}
+  update () {
+    if (this.lastTime === null) {
+      this.lastTime = this.game.now
+    }
+    if (this.lastTime + 3 <= this.game.now) {
+      if (this.currentImage == 15) {
+        this.game.nextState()
+      } else {
+        this.currentImage++
+        this.lastTime = this.game.now
+      }
+    }
+  }
+
+  render () {
+    game.canvas.drawImage(this.images[this.currentImage], 0, 0)
+  }
+}
+
 class StateGameplay {
   constructor(game) {
     this.game = game
@@ -326,7 +366,9 @@ class Game {
 
     this.states = {}
     this.states[consts.STATE_GAMEPLAY] = new StateGameplay(this)
-    this.currentState = this.states[consts.STATE_GAMEPLAY]
+    this.states[consts.STATE_BOSS_CUTSCENE] = new StateBossCutscene(this)
+    this._state = consts.STATE_GAMEPLAY
+    this.currentState = this.states[this._state]
 
     this.now = null
     this.event = null
@@ -346,8 +388,6 @@ class Game {
   }
 
   render () {
-
-
     this.syncBar.render()
 
     this.currentState.render()
@@ -356,6 +396,15 @@ class Game {
     this.launchpad.canvas.sync()
     this.launchpad.canvas.clip()
     this.launchpad.canvas.clear()
+  }
+
+  nextState () {
+    switch (this._state) {
+      case consts.STATE_GAMEPLAY:
+        this._state = consts.STATE_BOSS_CUTSCENE
+        break;
+    }
+    this.currentState = this.states[this._state]
   }
 
   update () {
