@@ -77,14 +77,21 @@ class StateBossCutscene {
   update () {
     if (this.lastTime === null) {
       this.lastTime = this.game.now
+      game.canvas.save()
+      game.canvas.scale(1.05, 1.05)
     }
     if (this.lastTime + 3 <= this.game.now) {
+      game.canvas.restore()
       if (this.currentImage == 15) {
         this.game.nextState()
       } else {
         this.currentImage++
         this.lastTime = this.game.now
+        game.canvas.save()
+        game.canvas.scale(1.05, 1.05)
       }
+    } else {
+      game.canvas.scale(0.9996, 0.9996)
     }
   }
 
@@ -102,7 +109,7 @@ class StateGameplay {
     this.failPulse = new Pulse('#f00')
     this.goPulse = new Pulse('white')
 
-    this.levels = [levels.level1, levels.level2, levels.level3]
+    this.levels = [levels.level1, levels.level2, levels.level3, levels.level4]
     this.levelIndex = 0
     this.level = null
 
@@ -367,7 +374,7 @@ class Game {
     this.states = {}
     this.states[consts.STATE_GAMEPLAY] = new StateGameplay(this)
     this.states[consts.STATE_BOSS_CUTSCENE] = new StateBossCutscene(this)
-    this._state = consts.STATE_GAMEPLAY
+    this._state = consts.STATE_BOSS_CUTSCENE
     this.currentState = this.states[this._state]
 
     this.now = null
@@ -392,7 +399,6 @@ class Game {
 
     this.currentState.render()
 
-    this.canvas.save()
     this.launchpad.canvas.sync()
     this.launchpad.canvas.clip()
     this.launchpad.canvas.clear()
