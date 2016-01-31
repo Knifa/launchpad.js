@@ -100,6 +100,47 @@ class StateBossCutscene {
   }
 }
 
+class StateOpenCutscene {
+  constructor (game) {
+    this.game = game
+    this.lastTime = null
+    this.image = new Image()
+    this.image.src = 'img/titleScreen.png';
+  }
+
+  enter () {}
+  exit () {}
+  update () {
+    if (this.lastTime === null) {
+      this.lastTime = this.game.now
+    }
+    if (this.lastTime + 5 <= this.game.now) {
+      this.game.nextState()
+    }
+  }
+
+  render () {
+    game.canvas.drawImage(this.image, 0, 0)
+  }
+}
+
+class StateCredits {
+  constructor (game) {
+    this.game = game
+    this.image = new Image()
+    this.image.src = 'img/creditsScreen.png'
+  }
+
+  enter () {}
+  exit () {}
+  update () {
+  }
+
+  render () {
+    game.canvas.drawImage(this.image, 0, 0)
+  }
+}
+
 class StateGameplay {
   constructor(game) {
     this.game = game
@@ -668,10 +709,12 @@ class Game {
     this.syncBar = new SyncBar()
 
     this.states = {}
+    this.states[consts.STATE_OPEN_CUTSCENE] = new StateOpenCutscene(this)
     this.states[consts.STATE_GAMEPLAY] = new StateGameplay(this)
     this.states[consts.STATE_BOSSPLAY] = new StateBossGameplay(this)
     this.states[consts.STATE_BOSS_CUTSCENE] = new StateBossCutscene(this)
-    this._state = consts.STATE_GAMEPLAY
+    this.states[consts.STATE_CREDITS] = new StateCredits(this)
+    this._state = consts.STATE_OPEN_CUTSCENE
     this.currentState = this.states[this._state]
 
     this.now = null
@@ -703,13 +746,21 @@ class Game {
 
   nextState () {
     switch (this._state) {
+      case consts.STATE_OPEN_CUTSCENE:
+        this._state = consts.STATE_GAMEPLAY
+        break
+
       case consts.STATE_GAMEPLAY:
         this._state = consts.STATE_BOSS_CUTSCENE
-        break;
+        break
 
       case consts.STATE_BOSS_CUTSCENE:
         this._state = consts.STATE_BOSSPLAY
-        break;
+        break
+
+      case consts.STATE_BOSSPLAY:
+        this._state = consts.STATE_CREDITS
+        break
     }
     this.currentState = this.states[this._state]
     if (this.currentState.enter) {
