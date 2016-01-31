@@ -33,6 +33,9 @@ export class Region {
     game.launchpad.canvas.ctx.fillStyle = fillStyle
     game.launchpad.canvas.ctx.fillRect(
       this.x, this.y, this.width, this.height)
+
+    let priest = game.priests[this.beat]
+    game.canvas.drawImage(priest.sprite, priest.x, priest.y - (Math.sin(Math.PI * game.globalPulse) * 15))
   }
 
   inRegion (coord) {

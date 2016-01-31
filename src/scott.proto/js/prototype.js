@@ -68,7 +68,7 @@ window.onload = function () {
       symbols[i] = new symbolGlow(symbolImgs[i]);
     }
 
-    ctx.scale(3,3);
+    ctx.scale(4,4);
     return setInterval(draw, 60);
     // window.requestAnimationFrame(draw);
   }

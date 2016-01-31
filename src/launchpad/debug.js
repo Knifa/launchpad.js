@@ -1,3 +1,4 @@
+import $ from 'jquery'
 import * as _ from 'lodash'
 
 import * as consts from './consts'
@@ -106,8 +107,13 @@ export class LaunchpadDebugMidiIn {
   }
 
   _mouseDownHandler(event) {
-    let x = Math.floor(event.clientX / SCALE)
-    let y = consts.GRID_SIZE - Math.floor(event.clientY / SCALE) - 1
+    let canvasPos = $(canvas).position()
+    let clickX = event.clientX - canvasPos.left
+    let clickY = event.clientY - canvasPos.top
+
+    let x = Math.floor(clickX / SCALE)
+    let y = consts.GRID_SIZE - Math.floor(clickY / SCALE) - 1
+
     let key = y * consts.GRID_SIZE + x
 
     for (let handler of this.eventHandlers['midimessage']) {
