@@ -14,7 +14,6 @@ export class AudioScheduler {
     this.delayNode = this.audio.ctx.createDelay(consts.AUDIO_DELAY)
     this.delayNode.delayTime.value = consts.AUDIO_DELAY
 
-
     this.crayDelay = new DelayGraph(this.audio)
     this.crayDelay.connect(this.audio.ctx.destination)
     this.delayNode.connect(this.crayDelay.destination)

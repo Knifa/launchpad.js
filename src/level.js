@@ -281,30 +281,60 @@ level4.beats = [
   null
 ]
 
-/*let level2 = new Level()
-level2.patterns = [
-  [[0, 0, 5, 5], [5, 5, 5, 5]],
-  [[5, 0, 5, 5]],
-  [[0, 5, 5, 5]]
-]
-level2.beats = [consts.BEAT_THREE, null,
-                consts.BEAT_ONE, null,
-                consts.BEAT_TWO, null,
-                consts.BEAT_ONE, null]
+export let bossLevel1 = new Level()
 
-let level3 = new Level()
-level3.patterns = [
-  [[1, 0, 1, 10], [4, 0, 1, 10], [7, 0, 1, 10]],
-  [[2, 0, 1, 10], [5, 0, 1, 10], [8, 0, 1, 10]],
-  [[3, 0, 1, 10], [6, 0, 1, 10]]
+bossLevel1.regions = [
+  new Region(
+    0, 0,
+    5, 10,
+    consts.BEAT_0
+  ),
+  new Region(
+    5, 0,
+    5, 10,
+    consts.BEAT_1
+  )
 ]
-level3.beats = [consts.BEAT_ONE, consts.BEAT_TWO, consts.BEAT_THREE]
 
-let level4 = new Level()
-level4.patterns = [
-  [[3, 1, 1, 1], [6, 1, 1, 1], [5, 5, 2, 1]],
-  [[2, 4, 1, 1], [4, 4, 2, 1], [7, 4, 1, 1], [3, 7, 3, 2], [6, 8, 1, 1], [7, 7, 1, 1]],
-  [[3, 2, 4, 2], [3, 4, 1, 1], [6, 4, 1, 1], [4, 6, 1, 1], [6, 6, 1, 1]],
-  [[1, 4, 1, 1], [3, 5, 1, 2], [4, 5, 1, 1], [5, 6, 1, 1], [8, 4, 1, 1]]
+bossLevel1.beats = [
+  consts.BEAT_0,
+  consts.BEAT_0,
+  null,
+  null,
+  consts.BEAT_1,
+  consts.BEAT_1,
+  null,
+  null
 ]
-level4.beats = [consts.BEAT_ONE, consts.BEAT_TWO, consts.BEAT_THREE, consts.BEAT_FOUR]*/
+
+
+export let bossLevel2 = new Level()
+
+bossLevel2.regions = [
+  new Region(
+    0, 0,
+    5, 5,
+    consts.BEAT_0
+  ),
+  new Region(
+    5, 0,
+    5, 5,
+    consts.BEAT_1
+  ),
+  new Region(
+    0, 5,
+    10, 5,
+    consts.BEAT_2
+  )
+]
+
+bossLevel2.beats = [
+  consts.BEAT_0,
+  consts.BEAT_1,
+  null,
+  null,
+  consts.BEAT_0,
+  consts.BEAT_2,
+  null,
+  null
+]

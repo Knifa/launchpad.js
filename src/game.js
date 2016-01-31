@@ -82,7 +82,7 @@ class StateBossCutscene {
     }
     if (this.lastTime + 3 <= this.game.now) {
       game.canvas.restore()
-      if (this.currentImage == 15) {
+      if (this.currentImage >= this.images.length - 1) {
         this.game.nextState()
       } else {
         this.currentImage++
@@ -116,6 +116,9 @@ class StateGameplay {
     this.switchingLevel = false
     this.switchingFade = 0
     this.switchingIntro = true
+
+    this.bossLasers = []
+    this.yourLasers = []
 
     this.background = new Image()
     this.background.src = 'img/ritualChamber.png';
@@ -212,7 +215,10 @@ class StateGameplay {
     gisAWeeShadowPal({ctx: game.canvas, sprite: this.player.eyes, x: this.player.x, y: this.player.y})
     gisAWeeShadowPal({ctx: game.canvas, sprite: this.dias, x: 208, y: 197})
 
-    this.level.render()
+    if (this.level)
+      this.level.render()
+
+
     this.failPulse.render()
     this.goPulse.render()
 
@@ -308,6 +314,11 @@ class StateGameplay {
   }
 
   _nextLevel () {
+    if (this.level == this.levels.slice(-1)[0]) {
+      this.game.nextState()
+      return
+    }
+
     this._setLevel(this.levels[++this.levelIndex])
     this.summonBar.value++
     this.symbolIndex++
@@ -319,6 +330,7 @@ class StateGameplay {
     this.totalBeats = 0
 
     this.levelBar.value = 0
+    this.levelBar.maxValue = this.level ? this.level.beats.length : 8
     this.doorGlow.zenith = 0
     this.levelBar.maxValue = this.level.beats.length
 
@@ -334,6 +346,8 @@ class StateGameplay {
 
   _beatDelayedHandler (soundColor) {
     this.totalBeats++
+    if (!this.level)
+      return
 
     if (this.switchingIntro) {
       if (this.totalBeats % this.level.beats.length * consts.SWITCH_BARS === 0) {
@@ -357,6 +371,288 @@ class StateGameplay {
 }
 
 
+class StateBossGameplay extends StateGameplay {
+  constructor (game) {
+    super(game)
+
+    this.levels = [levels.bossLevel1]
+
+    this.failPulse = new Pulse('#f00')
+    this.goPulse = new Pulse('white')
+
+    this.hpBar = new StatusBar({
+      game: this.game,
+      side: 'bottom',
+      startValue: 16,
+      minValue: 0,
+      maxValue: 16,
+      fillStyle: consts.COLOR_HP})
+
+    this.levelBar = new StatusBar({
+      game: this.game,
+      side: 'left',
+      startValue: 0,
+      minValue: 0,
+      maxValue: 8,
+      fillStyle: consts.COLOR_LEVEL})
+
+    this.summonBar.maxValue = this.levels.length
+    this.summonBar.value = this.summonBar.maxValue
+
+    this.background = new Image()
+    this.background.src = 'img/bossEncounter.png';
+
+    this.island = new Image()
+    this.island.src = 'img/floatingRock.png';
+
+    this.player = new Image()
+    this.player.src = 'img/player_Staff.png';
+
+    this.playerEyes = new Image()
+    this.playerEyes.src = 'img/player_eyes.png';
+
+    this.boss = new Image()
+    this.bossTheta = 0
+    this.bossMul = 1
+    this.boss.src = 'img/boss_base.png'
+
+    this.boss.crystals = {}
+    this.boss.crystals[consts.BEAT_0] = new Image()
+    this.boss.crystals[consts.BEAT_0].src = 'img/boss_crystal_m.png'
+
+    this.boss.crystals[consts.BEAT_1] = new Image()
+    this.boss.crystals[consts.BEAT_1].src = 'img/boss_crystal_g.png'
+
+    this.boss.crystals[consts.BEAT_2] = new Image()
+    this.boss.crystals[consts.BEAT_2].src = 'img/boss_crystal_b.png'
+
+    this.boss.crystals[consts.BEAT_3] = new Image()
+    this.boss.crystals[consts.BEAT_3].src = 'img/boss_crystal_y.png'
+
+    this.intro = true
+
+    this.shake = 0
+    this.shakeTheta = 0
+
+    this.won = false
+    this.whiteFade = 0
+  }
+
+  enter () {
+    this._setLevel(this.levels[this.levelIndex])
+  }
+
+  update() {
+    if (!this.intro && !this.won) {
+      this._pruneScheduledSounds()
+      this._handlePadOn()
+    }
+
+    if (this.won) {
+      this.whiteFade += 0.005
+      this.bossMul += 0.1
+
+      if (this.whiteFade >= 1) {
+        // CHANGE TO THE CREDITS
+      }
+    }
+
+    this.failPulse.update()
+    this.goPulse.update()
+
+    let remainingBossLasers = []
+    for (let bossLaser of this.bossLasers) {
+      bossLaser.val -= 0.1
+      if (bossLaser.val > 0)
+        remainingBossLasers.push(bossLaser)
+    }
+    this.bossLasers = remainingBossLasers
+
+    this.bossTheta += Math.pow(this.game.globalPulse.value, 2) * 0.25
+    this.shake -= 0.066
+    if (this.shake < 0)
+      this.shake = 0
+  }
+
+  render() {
+    let shakeX = Math.random() * 8 * Math.pow(this.shake, 2) - 2
+    let shakeY = Math.random() * 8 * Math.pow(this.shake, 2) - 2
+
+    this.hpBar.render()
+    this.levelBar.render()
+    this.summonBar.render()
+
+    if (this.level)
+      this.level.render()
+
+    this.failPulse.render()
+    this.goPulse.render()
+
+    this.game.canvas.clearRect(0, 0, 1440, 810)
+    this.game.canvas.drawImage(this.background, 0 + shakeX, 0 + shakeX)
+
+    this.game.canvas.drawImage(this.player, 240 + shakeX, 150 + shakeY)
+
+    let bossY = 0 + Math.sin(this.bossTheta) * 4
+    let bossYReal = 0 + Math.sin(this.bossTheta) * 4 * this.bossMul
+    let bossX = 0
+    if (this.won) {
+      bossX = Math.random() * this.bossMul
+      bossYReal += Math.random() * this.bossMul
+    }
+    this.game.canvas.drawImage(this.boss, 340 + bossX, bossYReal)
+    for (let color in this.boss.crystals) {
+      if (color != this.game.syncBar.color)
+        continue
+
+      let crystal = this.boss.crystals[color]
+      this.game.canvas.drawImage(crystal, 340, bossYReal)
+    }
+
+    this.game.canvas.drawImage(this.island, 250 + shakeX, 5 - (bossY/4) + shakeY)
+    this.game.canvas.drawImage(this.playerEyes, 240 + shakeX, 150 + (bossY/10) + shakeY)
+
+    this.game.canvas.globalCompositeOperation = 'lighter'
+    for (let bossLaser of this.bossLasers) {
+      let style1 = tinycolor(consts.COLORS[bossLaser.color]).setAlpha(0.33)
+      let style2 = tinycolor(consts.COLORS[bossLaser.color]).darken(10).setAlpha(0.5)
+
+      let startX = 240 + 32
+      let startY = 150 + 32
+
+      let endX = 340 + 64
+      let endY = 0 + 96 + bossY
+
+      switch (bossLaser.color) {
+        case consts.BEAT_0:
+          endX += 32
+          endY += 24
+        break
+
+        case consts.BEAT_1:
+          endX -= 32
+          endY += 24
+        break
+
+        case consts.BEAT_2:
+          endX -= 40
+          endY -= 40
+        break
+
+        case consts.BEAT_3:
+          endX += 40
+          endY -= 40
+        break
+      }
+
+      this.game.canvas.lineCap="round"
+      this.game.canvas.strokeStyle = style2
+      this.game.canvas.lineWidth = bossLaser.val * 32
+      this.game.canvas.beginPath()
+      this.game.canvas.moveTo(startX, startY)
+      this.game.canvas.lineTo(endX, endY)
+      this.game.canvas.stroke()
+      this.game.canvas.closePath()
+
+      this.game.canvas.strokeStyle = style1
+      this.game.canvas.lineWidth = bossLaser.val * 16
+      this.game.canvas.beginPath()
+      this.game.canvas.moveTo(startX, startY)
+      this.game.canvas.lineTo(endX, endY)
+      this.game.canvas.stroke()
+      this.game.canvas.closePath()
+    }
+    this.game.canvas.globalCompositeOperation = 'source-over'
+
+    if (this.won) {
+      this.game.canvas.fillStyle = tinycolor('white').setAlpha(this.whiteFade).toString()
+      this.game.canvas.fillRect(0, 0, 1920, 1080)
+
+      this.game.launchpad.canvas.clip()
+      this.game.launchpad.canvas.ctx.fillStyle = tinycolor('white').setAlpha(this.whiteFade).toString()
+      this.game.launchpad.canvas.ctx.fillRect(0, 0, 10, 10)
+    }
+  }
+
+  _beatDelayedHandler (soundColor) {
+    this.totalBeats++
+
+    if (this.won)
+      return
+
+    if (soundColor != undefined) {
+      this.bossLasers.push({
+        color: soundColor,
+        val: 1
+      })
+    }
+
+
+    if (this.intro && this.totalBeats === this.level.beats.length / 2) {
+      this.intro = false
+      this._updateAudioSchedulerSequence()
+      this.totalBeats = 0
+    } else {
+      if (this.totalBeats === this.level.beats.length) {
+        this.goPulse.trigger()
+      }
+
+      if (this.levelBar.value == this.levelBar.maxValue) {
+        this.game.audioScheduler.seq = []
+        this._nextLevel()
+        this.summonBar.value -= 1
+      }
+    }
+  }
+
+  _inTutorial() {
+    return this.totalBeats <= this.level.beats.length * 1
+  }
+
+  _hitBeat () {
+    this.levelBar.value++
+
+
+
+  }
+
+  _missedBeat () {
+    this.hpBar.value--
+    this.failPulse.trigger()
+    this.shake = 1
+  }
+
+  _nextLevel () {
+    if (this.level == this.levels.slice(-1)[0]) {
+      this.won = true
+      this.game.audioScheduler.seq = []
+    }
+
+    this._setLevel(this.levels[++this.levelIndex])
+    this.intro = true
+    this.totalBeats = 0
+    //this.summonBar.value++
+  }
+
+  _setLevel(level) {
+    this.level = level
+    this.totalBeats = 0
+
+    this.levelBar.value = 0
+
+    let beatCount = 0
+    if (this.level) {
+      for (let beat of this.level.beats) {
+        if (beat != null)
+          beatCount++
+      }
+    }
+
+    this.levelBar.maxValue = beatCount
+  }
+}
+
+
 class Game {
   constructor () {
     getLaunchpad(false).then(this.start.bind(this))
@@ -373,8 +669,9 @@ class Game {
 
     this.states = {}
     this.states[consts.STATE_GAMEPLAY] = new StateGameplay(this)
+    this.states[consts.STATE_BOSSPLAY] = new StateBossGameplay(this)
     this.states[consts.STATE_BOSS_CUTSCENE] = new StateBossCutscene(this)
-    this._state = consts.STATE_BOSS_CUTSCENE
+    this._state = consts.STATE_GAMEPLAY
     this.currentState = this.states[this._state]
 
     this.now = null
@@ -409,8 +706,15 @@ class Game {
       case consts.STATE_GAMEPLAY:
         this._state = consts.STATE_BOSS_CUTSCENE
         break;
+
+      case consts.STATE_BOSS_CUTSCENE:
+        this._state = consts.STATE_BOSSPLAY
+        break;
     }
     this.currentState = this.states[this._state]
+    if (this.currentState.enter) {
+      this.currentState.enter()
+    }
   }
 
   update () {
