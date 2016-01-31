@@ -45,6 +45,14 @@ class Priest {
   }
 }
 
+class Symbol {
+  constructor(index) {
+    this.index = index
+    this.sprite = new Image()
+    this.sprite.src = 'img/ritualChamber_symbols_' + (index + 1) + '.png'
+  }
+}
+
 class StateGameplay {
   constructor(game) {
     this.game = game
@@ -85,6 +93,12 @@ class StateGameplay {
       this.priests[i] = new Priest(i)
     }
 
+    this.symbolIndex = 0
+    this.symbols = []
+    for (let i = 0; i < 4; i ++) {
+      this.symbols.push(new Symbol(i))
+    }
+
     this.hpBar = new StatusBar({
       game: this.game,
       side: 'bottom',
@@ -106,7 +120,7 @@ class StateGameplay {
       side: 'right',
       startValue: 0,
       minValue: 0,
-      maxValue: 8,
+      maxValue: 4,
       fillStyle: consts.COLOR_SUMMON})
   }
 
@@ -157,6 +171,10 @@ class StateGameplay {
 
     for (let priest of this.priests) {
       priest.render()
+    }
+
+    for (let i = 0; i < this.symbolIndex; i++) {
+      game.canvas.drawImage(this.symbols[i].sprite, 0, 0)
     }
 
     if (this.switchingLevel) {
@@ -219,6 +237,7 @@ class StateGameplay {
   _missedBeat () {
     this.hpBar.value--
     this.levelBar.value--
+    this.doorGlow.zenith = 246 * (this.levelBar.value / this.levelBar.maxValue)
     this.failPulse.trigger()
   }
 
@@ -244,6 +263,7 @@ class StateGameplay {
   _nextLevel () {
     this._setLevel(this.levels[++this.levelIndex])
     this.summonBar.value++
+    this.symbolIndex++
     this.switchingIntro = true
   }
 
@@ -252,6 +272,7 @@ class StateGameplay {
     this.totalBeats = 0
 
     this.levelBar.value = 0
+    this.doorGlow.zenith = 0
     this.levelBar.maxValue = this.level.beats.length
 
     if (this.level === undefined) {
