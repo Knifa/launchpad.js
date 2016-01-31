@@ -17,7 +17,6 @@ class Priest {
   }
 }
 
-
 class StateGameplay {
   constructor(game) {
     this.game = game
@@ -34,6 +33,29 @@ class StateGameplay {
     this.switchingLevel = false
     this.switchingFade = 0
     this.switchingIntro = true
+
+    this.background = new Image()
+    this.background.src = 'img/ritualChamber.png';
+    this.doorGlow = {
+      sprite: new Image(),
+      y: 246,
+      zenith: 0
+    };
+    this.doorGlow.sprite.src = 'img/ritualChamber_glow.png'
+    this.player = {
+      sprite: new Image(),
+      eyes: new Image(),
+      x : 200,
+      y: 197
+    }
+    this.dias = new Image()
+    this.dias.src = 'img/dias.png'
+    this.player.sprite.src = 'img/player_Chanting.png';
+    this.player.eyes.src = 'img/player_eyes.png';
+    this.priests = []
+    for (let i = 0; i < 4; i++) {
+      this.priests[i] = new Priest(i * 50)
+    }
 
     this.hpBar = new StatusBar({
       game: this.game,
@@ -88,6 +110,19 @@ class StateGameplay {
     this.levelBar.render()
     this.summonBar.render()
 
+    game.canvas.fillRect(0, 0, 1440, 810)
+    game.canvas.drawImage(this.background, 0, 0)
+
+    game.canvas.drawImage(this.doorGlow.sprite, 0, this.doorGlow.y - this.doorGlow.zenith, 480, 270,
+                          0, this.doorGlow.y - this.doorGlow.zenith, 480, 270)
+
+    game.canvas.drawImage(this.player.sprite, this.player.x, this.player.y)
+    game.canvas.drawImage(this.player.eyes, this.player.x, this.player.y)
+    game.canvas.drawImage(this.dias, 208, 197)
+    gisAWeeShadowPal({ctx: game.canvas, sprite: this.player.sprite, x: this.player.x, y: this.player.y})
+    gisAWeeShadowPal({ctx: game.canvas, sprite: this.player.eyes, x: this.player.x, y: this.player.y})
+    gisAWeeShadowPal({ctx: game.canvas, sprite: this.dias, x: 208, y: 197})
+
     this.level.render()
     this.failPulse.render()
     this.goPulse.render()
@@ -140,6 +175,7 @@ class StateGameplay {
 
   _hitBeat () {
     this.levelBar.value++
+    this.doorGlow.zenith = 246 * (this.levelBar.value / this.levelBar.maxValue)
 
     if (this.levelBar.value == this.levelBar.maxValue) {
       this.switchingLevel = true
@@ -233,23 +269,6 @@ class Game {
     this.canvas.imageSmoothingEnabled = false
     this.canvas.scale(3, 3)
 
-    this.background = new Image()
-    this.background.src = 'img/ritualChamber.png';
-    this.player = {
-      sprite: new Image(),
-      eyes: new Image(),
-      x : 200,
-      y: 197
-    }
-    this.dias = new Image()
-    this.dias.src = 'img/dias.png'
-    this.player.sprite.src = 'img/player_Chanting.png';
-    this.player.eyes.src = 'img/player_eyes.png';
-    this.priests = []
-    for (let i = 0; i < 4; i++) {
-      this.priests[i] = new Priest(i * 50)
-    }
-
     this.syncBar = new SyncBar()
 
     this.states = {}
@@ -274,18 +293,7 @@ class Game {
   }
 
   render () {
-    this.canvas.fillRect(0, 0, 1440, 810)
-    this.canvas.drawImage(this.background, 0, 0)
-    //for (let priest of this.priests) {
-    //  this.canvas.drawImage(priest.sprite, priest.x, priest.y)
-    //}
 
-    this.canvas.drawImage(this.player.sprite, this.player.x, this.player.y)
-    this.canvas.drawImage(this.player.eyes, this.player.x, this.player.y)
-    this.canvas.drawImage(this.dias, 208, 197)
-    gisAWeeShadowPal({ctx: this.canvas, sprite: this.player.sprite, x: this.player.x, y: this.player.y})
-    gisAWeeShadowPal({ctx: this.canvas, sprite: this.player.eyes, x: this.player.x, y: this.player.y})
-    gisAWeeShadowPal({ctx: this.canvas, sprite: this.dias, x: 208, y: 197})
 
     this.syncBar.render()
 

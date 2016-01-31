@@ -35,7 +35,7 @@ export class Region {
     game.launchpad.canvas.ctx.fillRect(
       this.x, this.y, this.width, this.height)
 
-    let priest = game.priests[this.beat]
+    let priest = game.currentState.priests[this.beat]
     if (this.beat == game.syncBar.color) {
       var y = priest.y - (Math.sin(Math.PI * game.globalPulse.value) * 15)
     } else {
