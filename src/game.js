@@ -6,9 +6,18 @@ import { StatusBar } from './utils'
 
 import * as levels from './level'
 
+class Priest {
+  constructor (x) {
+    this.sprite = new Image()
+    this.sprite.src = 'img/priest_Chanting.png'
+    this.x = x
+    this.y = 197
+  }
+}
+
 class Game {
   constructor () {
-    getLaunchpad(true).then(this.start.bind(this))
+    getLaunchpad(false).then(this.start.bind(this))
 
     this.globalPulse = 0
     this.successPulse = 0
@@ -17,6 +26,25 @@ class Game {
     this.level = null
     this.oldLevels = []
     this.levels = [levels.level1]
+
+    this.canvas = document.getElementById('theScreen').getContext('2d')
+    this.canvas.imageSmoothingEnabled = false
+    this.canvas.scale(3, 3)
+
+    this.background = new Image()
+    this.background.src = 'img/ritualChamber.png';
+    this.player = {
+      sprite: new Image(),
+      eyes: new Image(),
+      x : 200,
+      y: 197
+    }
+    this.player.sprite.src = 'img/player_Chanting.png';
+    this.player.eyes.src = 'img/player_eyes.png';
+    this.priests = []
+    for (let i = 0; i < 4; i++) {
+      this.priests[i] = new Priest(i * 50)
+    }
 
     this.event = null
 
@@ -58,9 +86,20 @@ class Game {
     this.launchpad.canvas.ctx.fillStyle = 'rgba(255, 255, 255, ' + this.globalPulse + ')'
     this.launchpad.canvas.ctx.fillRect(0, 9, 10, 1)
 
+    this.canvas.fillRect(0, 0, 1440, 810)
+    this.canvas.drawImage(this.background, 0, 0)
+    //for (let priest of this.priests) {
+    //  this.canvas.drawImage(priest.sprite, priest.x, priest.y)
+    //}
+
+
     this.level.render()
     this.hpBar.render()
     this.levelBar.render()
+
+    this.canvas.drawImage(this.player.sprite, this.player.x, this.player.y)
+    this.canvas.drawImage(this.player.eyes, this.player.x, this.player.y)
+    this.canvas.save()
 
     this.launchpad.canvas.sync()
     this.launchpad.canvas.clip()
