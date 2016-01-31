@@ -283,6 +283,9 @@ class StateGameplay {
 
   _missedBeat () {
     this.hpBar.value--
+    if (this.hpBar.value == 0)
+      window.location.reload()
+
     this.levelBar.value--
     this.doorGlow.zenith = 246 * (this.levelBar.value / this.levelBar.maxValue)
     this.failPulse.trigger()
@@ -321,6 +324,7 @@ class StateGameplay {
 
   _setLevel(level) {
     this.level = level
+    this.game.audioScheduler.setBeatDelay(level.beatWindow)
     this.totalBeats = 0
 
     this.levelBar.value = 0
@@ -614,6 +618,9 @@ class StateBossGameplay extends StateGameplay {
     this.hpBar.value--
     this.failPulse.trigger()
     this.shake = 1
+
+    if (this.hpBar.value == 0)
+      window.location.reload()
   }
 
   _nextLevel () {
@@ -630,6 +637,7 @@ class StateBossGameplay extends StateGameplay {
 
   _setLevel(level) {
     this.level = level
+    this.game.audioScheduler.setBeatDelay(level.beatDelay)
     this.totalBeats = 0
 
     this.levelBar.value = 0

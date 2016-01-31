@@ -48,27 +48,16 @@ export class Region {
 
 
 export class Level {
-  constructor () {
+  constructor (beatDelay = consts.BEAT_DELAY) {
     this.regions  = []
     this.beats = []
+    this.beatDelay = beatDelay
   }
 
   render () {
     for (let region of this.regions) {
       region.render()
     }
-
-    /*for (let i = 0; i < consts.COLORS.length && i < this.patterns.length; i++) {
-      if (tutorial == 0 || (tutorial == 1 && sound !== null && i === consts.BEATS.indexOf(sound))) {
-        this.game.launchpad.canvascanvas.ctx.fillStyle = tinycolor(consts.COLORS[i])
-          .darken((1 - this.game.globalPulse.val) * 33)
-          .toString()
-
-        for (let pattern of this.patterns[i]) {
-          this.game.launchpad.canvascanvas.ctx.fillRect(pattern[0], pattern[1], pattern[2], pattern[3])
-        }
-      }
-    }*/
   }
 
   hit (beat, coord) {
@@ -179,28 +168,40 @@ level3.beats = [
 ]
 
 
-export let bossLevel1 = new Level()
+export let bossLevel1 = new Level(400)
 
 bossLevel1.regions = [
   new Region(
-    0, 0,
-    5, 10,
+    1, 1,
+    2, 2,
     consts.BEAT_0
   ),
   new Region(
-    5, 0,
-    5, 10,
+    3, 3,
+    2, 2,
     consts.BEAT_1
+  ),
+
+  new Region(
+    5, 0,
+    1, 10,
+    consts.BEAT_2
+  ),
+
+  new Region(
+    6, 6,
+    3, 1,
+    consts.BEAT_3
   )
 ]
 
 bossLevel1.beats = [
-  consts.BEAT_0,
-  consts.BEAT_0,
+  consts.BEAT_3,
+  consts.BEAT_3,
+  consts.BEAT_2,
   null,
-  null,
-  consts.BEAT_1,
-  consts.BEAT_1,
+  consts.BEAT_0,
+  consts.BEAT_2,
   null,
   null
 ]
@@ -227,7 +228,7 @@ bossLevel2.regions = [
 ]
 
 bossLevel2.beats = [
-  consts.BEAT_0,
+  consts.BEAT_1,
   consts.BEAT_1,
   null,
   null,

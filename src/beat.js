@@ -10,6 +10,7 @@ import * as consts from './consts'
 export class AudioScheduler {
   constructor () {
     this.audio = new Audio()
+    this.beatDelay = consts.BEAT_DELAY
 
     this.delayNode = this.audio.ctx.createDelay(consts.AUDIO_DELAY)
     this.delayNode.delayTime.value = consts.AUDIO_DELAY
@@ -66,7 +67,16 @@ export class AudioScheduler {
 
     this.interval = window.setInterval(
       this.update.bind(this),
-      consts.BEAT_DELAY)
+      this.beatDelay)
+  }
+
+  setBeatDelay(delay) {
+    console.log('y')
+    this.beatDelay = delay
+    window.clearInterval(this.interval)
+    this.interval = window.setInterval(
+      this.update.bind(this),
+      this.beatDelay)
   }
 
   stop () {
