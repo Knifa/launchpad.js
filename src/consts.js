@@ -1,6 +1,6 @@
 //export const AUDIO_DELAY = 0.25
 export const AUDIO_DELAY = 0.25
-export const BEAT_DELAY = 750
+export const BEAT_DELAY = 500
 export const BEAT_WINDOW = 0.15
 
 export const BEAT_0 = 0
@@ -25,4 +25,6 @@ export const COLOR_HP = '#0f0'
 export const COLOR_LEVEL = '#ff0'
 export const COLOR_SUMMON = '#f0f'
 
-export const TUTORIAL_BARS = 1
+export const TUTORIAL_BARS = 2
+export const COMPLETE_BARS = 2
+export const SWITCH_BARS = 2

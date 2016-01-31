@@ -2,6 +2,7 @@ import { EventEmitter } from 'events'
 
 import { Audio } from './audio'
 import { SynthGraph, DrumSynthGraph } from './audio/synth'
+import { DelayGraph } from './audio/effects'
 
 import * as consts from './consts'
 
@@ -12,11 +13,15 @@ export class AudioScheduler {
 
     this.delayNode = this.audio.ctx.createDelay(consts.AUDIO_DELAY)
     this.delayNode.delayTime.value = consts.AUDIO_DELAY
-    this.delayNode.connect(this.audio.ctx.destination)
+
+
+    this.crayDelay = new DelayGraph(this.audio)
+    this.crayDelay.connect(this.audio.ctx.destination)
+    this.delayNode.connect(this.crayDelay.destination)
 
     this.metroSynth = {
       beat: new DrumSynthGraph(this.audio, 100, 0.2),
-      bar: new DrumSynthGraph(this.audio, 800, 0.05)
+      bar: new DrumSynthGraph(this.audio, 1600, 0.05)
     }
 
     for (let s in this.metroSynth) {
@@ -34,10 +39,25 @@ export class AudioScheduler {
       this.synths[s].adsr.d = 0.25
     }
 
-    this.synths[consts.BEAT_0].osc.frequency.value = 400
-    this.synths[consts.BEAT_1].osc.frequency.value = 600
-    this.synths[consts.BEAT_2].osc.frequency.value = 800
-    this.synths[consts.BEAT_3].osc.frequency.value = 1000
+    this.synths[consts.BEAT_0].osc.type = 'sawtooth'
+    this.synths[consts.BEAT_1].osc.type = 'sawtooth'
+    this.synths[consts.BEAT_2].osc.type = 'sawtooth'
+    this.synths[consts.BEAT_3].osc.type = 'sawtooth'
+
+    this.synths[consts.BEAT_0].osc.frequency.value = 300
+    this.synths[consts.BEAT_1].osc.frequency.value = 400
+    this.synths[consts.BEAT_2].osc.frequency.value = 600
+    this.synths[consts.BEAT_3].osc.frequency.value = 700
+
+    this.synths[consts.BEAT_0].osc2.type = 'sawtooth'
+    this.synths[consts.BEAT_1].osc2.type = 'sawtooth'
+    this.synths[consts.BEAT_2].osc2.type = 'sawtooth'
+    this.synths[consts.BEAT_3].osc2.type = 'sawtooth'
+
+    this.synths[consts.BEAT_0].osc2.frequency.value = 300
+    this.synths[consts.BEAT_1].osc2.frequency.value = 400
+    this.synths[consts.BEAT_2].osc2.frequency.value = 600
+    this.synths[consts.BEAT_3].osc2.frequency.value = 700
 
     this.seq = []
     this.seqIndex = 0
