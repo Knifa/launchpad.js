@@ -1,5 +1,7 @@
+import { EventEmitter } from 'events'
+
 import { Audio } from './audio'
-import { DrumSynthGraph } from './audio/synth'
+import { SynthGraph, DrumSynthGraph } from './audio/synth'
 
 import * as consts from './consts'
 
@@ -12,23 +14,41 @@ export class AudioScheduler {
     this.delayNode.delayTime.value = consts.AUDIO_DELAY
     this.delayNode.connect(this.audio.ctx.destination)
 
-    this.synths = {
-      kick: new DrumSynthGraph(this.audio, 200, 1),
-      lowTom: new DrumSynthGraph(this.audio, 400, 1),
-      highTom: new DrumSynthGraph(this.audio, 800, 1),
-      defaultBeat: new DrumSynthGraph(this.audio, 100, 0.5)
+    this.metroSynth = {
+      beat: new DrumSynthGraph(this.audio, 100, 0.2),
+      bar: new DrumSynthGraph(this.audio, 800, 0.05)
     }
+
+    for (let s in this.metroSynth) {
+      this.metroSynth[s].connect(this.delayNode)
+    }
+
+    this.synths = {}
+    this.synths[consts.BEAT_0] = new SynthGraph(this.audio)
+    this.synths[consts.BEAT_1] = new SynthGraph(this.audio)
+    this.synths[consts.BEAT_2] = new SynthGraph(this.audio)
+    this.synths[consts.BEAT_3] = new SynthGraph(this.audio)
 
     for (let s in this.synths) {
       this.synths[s].connect(this.delayNode)
+      this.synths[s].adsr.d = 0.25
     }
+
+    this.synths[consts.BEAT_0].osc.frequency.value = 400
+    this.synths[consts.BEAT_1].osc.frequency.value = 600
+    this.synths[consts.BEAT_2].osc.frequency.value = 800
+    this.synths[consts.BEAT_3].osc.frequency.value = 1000
 
     this.seq = []
     this.seqIndex = 0
     this.scheduledSounds = []
+
+    this.events = new EventEmitter()
     this.callback = () => {}
 
-    this.interval = window.setInterval(this.update.bind(this), consts.BEAT_DELAY)
+    this.interval = window.setInterval(
+      this.update.bind(this),
+      consts.BEAT_DELAY)
   }
 
   stop () {
@@ -39,10 +59,17 @@ export class AudioScheduler {
     if (this.seq.length === 0)
       return
 
+    this._triggerMetronome()
+    this.events.emit('beat-triggered')
+    window.setTimeout(
+      (() => {
+        this.events.emit('beat-delayed')
+      }).bind(this), consts.AUDIO_DELAY * 1000)
+
     let currentSound = this.seq[this.seqIndex]
     this.seqIndex = (this.seqIndex + 1) % this.seq.length
 
-    if (currentSound === null)
+    if (currentSound == null)
       return
 
     this.synths[currentSound].trigger()
@@ -50,6 +77,14 @@ export class AudioScheduler {
       sound: currentSound,
       time: this.audio.ctx.currentTime + consts.AUDIO_DELAY
     })
+
+    this.events.emit('beat-scheduled')
     this.callback()
+  }
+
+  _triggerMetronome () {
+    this.metroSynth.beat.trigger()
+    if (this.seqIndex % 4 === 0)
+      this.metroSynth.bar.trigger()
   }
 }

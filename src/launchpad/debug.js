@@ -107,7 +107,7 @@ export class LaunchpadDebugMidiIn {
 
   _mouseDownHandler(event) {
     let x = Math.floor(event.clientX / SCALE)
-    let y = Math.floor(event.clientY / SCALE)
+    let y = consts.GRID_SIZE - Math.floor(event.clientY / SCALE) - 1
     let key = y * consts.GRID_SIZE + x
 
     for (let handler of this.eventHandlers['midimessage']) {
@@ -122,7 +122,7 @@ export class LaunchpadDebugMidiIn {
 
   _mouseUpHandler(event) {
     let x = Math.floor(event.clientX / SCALE)
-    let y = Math.floor(event.clientY / SCALE)
+    let y = consts.GRID_SIZE - Math.floor(event.clientY / SCALE) - 1
     let key = y * consts.GRID_SIZE + x
 
     for (let handler of this.eventHandlers['midimessage']) {
