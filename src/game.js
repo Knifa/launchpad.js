@@ -15,6 +15,9 @@ class Priest {
   }
 }
 
+
+
+
 class Game {
   constructor () {
     getLaunchpad(true).then(this.start.bind(this))
@@ -25,9 +28,9 @@ class Game {
 
     this.totalBeats = 0
 
+    this.levels = [levels.level1, levels.level2, levels.level3]
+    this.levelIndex = 0
     this.level = null
-    this.oldLevels = []
-    this.levels = [levels.level1]
 
     this.canvas = document.getElementById('theScreen').getContext('2d')
     this.canvas.imageSmoothingEnabled = false
@@ -66,6 +69,14 @@ class Game {
       maxValue: 16,
       fillStyle: consts.COLOR_LEVEL})
 
+    this.summonBar = new StatusBar({
+        game: this,
+        side: 'right',
+        startValue: 0,
+        minValue: 0,
+        maxValue: 8,
+        fillStyle: consts.COLOR_SUMMON})
+
     this.syncBar = new SyncBar()
 
     this.now = null
@@ -80,7 +91,7 @@ class Game {
       'beat-delayed',
       this._beatDelayedHandler.bind(this))
 
-    this.levelUp()
+    this._setLevel(this.levels[0])
     this.update()
   }
 
@@ -95,10 +106,13 @@ class Game {
     this.canvas.drawImage(this.player.eyes, this.player.x, this.player.y)
     this.canvas.save()
 
-    this.level.render()
+    if (this.level)
+      this.level.render()
+
     this.hpBar.render()
     this.levelBar.render()
     this.syncBar.render()
+    this.summonBar.render()
 
     this.failPulse.render()
     this.goPulse.render()
@@ -154,28 +168,6 @@ class Game {
     }
   }
 
-  levelDown () {
-    this.levels.unshift(this.level)
-    this.level = this.oldLevels.pop()
-    this.switchAudio()
-    this.tutorial = 1
-  }
-
-  levelUp () {
-    this.oldLevels.push(this.level)
-    this.level = this.levels.shift()
-    this.switchAudio()
-    this.tutorial = 1
-  }
-
-  switchAudio () {
-    if (this.level === null) {
-      this.audioScheduler.stop()
-    } else {
-      this.audioScheduler.seq = this.level.beats
-    }
-  }
-
   _beatDelayedHandler (soundColor) {
     this.globalPulse.trigger()
 
@@ -188,7 +180,13 @@ class Game {
   }
 
   _hitBeat () {
+    let oldLevelVal = this.levelBar.value
     this.levelBar.value += 2
+
+    if (this.levelBar.value == this.levelBar.maxValue &&
+        oldLevelVal == this.levelBar.value) {
+      this._nextLevel()
+    }
   }
 
   _missedBeat () {
@@ -220,6 +218,24 @@ class Game {
 
   _inTutorial () {
     return this.totalBeats <= this.level.beats.length * consts.TUTORIAL_BARS
+  }
+
+  _nextLevel () {
+    this._setLevel(this.levels[++this.levelIndex])
+    this.summonBar.value++
+    this.audioScheduler.stop()
+  }
+
+  _setLevel(level) {
+    this.level = level
+    this.totalBeats = 0
+    this.levelBar.value = 0
+
+    if (this.level === undefined) {
+
+    } else {
+      this.audioScheduler.seq = this.level.beats
+    }
   }
 }
 

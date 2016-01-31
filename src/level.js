@@ -111,6 +111,75 @@ level1.beats = [
   null
 ]
 
+
+export let level2 = new Level()
+
+level2.regions = [
+  new Region(
+    0, 0,
+    5, 5,
+    consts.BEAT_0
+  ),
+  new Region(
+    5, 0,
+    5, 5,
+    consts.BEAT_1
+  ),
+  new Region(
+    0, 5,
+    10, 5,
+    consts.BEAT_2
+  )
+]
+
+level2.beats = [
+  consts.BEAT_0,
+  consts.BEAT_1,
+  null,
+  null,
+  consts.BEAT_0,
+  consts.BEAT_2,
+  null,
+  null
+]
+
+export let level3 = new Level()
+
+level3.regions = [
+  new Region(
+    1, 0,
+    1, 10,
+    consts.BEAT_0
+  ),
+  new Region(
+    3, 0,
+    1, 10,
+    consts.BEAT_1
+  ),
+  new Region(
+    5, 0,
+    1, 10,
+    consts.BEAT_2
+  ),
+
+  new Region(
+    7, 0,
+    1, 10,
+    consts.BEAT_3
+  )
+]
+
+level3.beats = [
+  consts.BEAT_0,
+  consts.BEAT_1,
+  consts.BEAT_2,
+  null,
+  consts.BEAT_3,
+  consts.BEAT_2,
+  consts.BEAT_3,
+  null
+]
+
 /*let level2 = new Level()
 level2.patterns = [
   [[0, 0, 5, 5], [5, 5, 5, 5]],

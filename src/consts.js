@@ -22,5 +22,9 @@ COLORS[BEAT_3] = '#fa0'
 
 export const COLOR_HP = '#0f0'
 export const COLOR_LEVEL = '#ff0'
+export const COLOR_SUMMON = '#f0f'
 
 export const TUTORIAL_BARS = 1
+
+export const STATE_SUMMON_LEVEL = 0
+export const STATE_SUMMON_LEVEL_SWITCHING = 1
