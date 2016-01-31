@@ -34,15 +34,6 @@ export class Region {
     game.launchpad.canvas.ctx.fillStyle = fillStyle
     game.launchpad.canvas.ctx.fillRect(
       this.x, this.y, this.width, this.height)
-
-    let priest = game.priests[this.beat]
-    if (this.beat == game.syncBar.color) {
-      var y = priest.y - (Math.sin(Math.PI * game.globalPulse.value) * 15)
-    } else {
-      var y = priest.y
-    }
-    game.canvas.drawImage(priest.sprite, priest.x, y)
-    gisAWeeShadowPal({ ctx: game.canvas, sprite: priest.sprite, x: priest.x, y: y})
   }
 
   inRegion (coord) {
@@ -210,6 +201,38 @@ bossLevel1.beats = [
   null,
   consts.BEAT_1,
   consts.BEAT_1,
+  null,
+  null
+]
+
+
+export let bossLevel2 = new Level()
+
+bossLevel2.regions = [
+  new Region(
+    0, 0,
+    5, 5,
+    consts.BEAT_0
+  ),
+  new Region(
+    5, 0,
+    5, 5,
+    consts.BEAT_1
+  ),
+  new Region(
+    0, 5,
+    10, 5,
+    consts.BEAT_2
+  )
+]
+
+bossLevel2.beats = [
+  consts.BEAT_0,
+  consts.BEAT_1,
+  null,
+  null,
+  consts.BEAT_0,
+  consts.BEAT_2,
   null,
   null
 ]

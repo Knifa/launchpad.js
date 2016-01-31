@@ -24,7 +24,7 @@ export function RgbaToCss(rgba) {
 }
 
 export function gisAWeeShadowPal({ctx, sprite, x, y}) {
-  ctx.drawImage(sprite, x, y)
+  //ctx.drawImage(sprite, x, y)
   ctx.save()
   ctx.translate(0, 100)
   ctx.scale(1, -1)
