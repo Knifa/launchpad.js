@@ -34,15 +34,6 @@ export class Region {
     game.launchpad.canvas.ctx.fillStyle = fillStyle
     game.launchpad.canvas.ctx.fillRect(
       this.x, this.y, this.width, this.height)
-
-    let priest = game.currentState.priests[this.beat]
-    if (this.beat == game.syncBar.color) {
-      var y = priest.y - (Math.sin(Math.PI * game.globalPulse.value) * 15)
-    } else {
-      var y = priest.y
-    }
-    game.canvas.drawImage(priest.sprite, priest.x, y)
-    gisAWeeShadowPal({ ctx: game.canvas, sprite: priest.sprite, x: priest.x, y: y})
   }
 
   inRegion (coord) {

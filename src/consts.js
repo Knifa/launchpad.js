@@ -16,10 +16,10 @@ export const STATE_BOSSPLAY = 4
 export const STATE_CREDITS = 5
 
 export const COLORS = {}
-COLORS[BEAT_0] = '#a0f'
-COLORS[BEAT_1] = '#af0'
-COLORS[BEAT_2] = '#0af'
-COLORS[BEAT_3] = '#fa0'
+COLORS[BEAT_0] = '#a0f' // purple
+COLORS[BEAT_1] = '#af0' // lime green
+COLORS[BEAT_2] = '#0af' // sky blue
+COLORS[BEAT_3] = '#fa0' // orange
 
 export const COLOR_HP = '#0f0'
 export const COLOR_LEVEL = '#ff0'

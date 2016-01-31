@@ -9,11 +9,39 @@ import { gisAWeeShadowPal, StatusBar, SyncBar, Pulse } from './utils'
 import * as levels from './level'
 
 class Priest {
-  constructor (x) {
+  constructor (beat) {
     this.sprite = new Image()
-    this.sprite.src = 'img/priest_Chanting.png'
-    this.x = x
+    switch (beat) {
+      case consts.BEAT_0:
+        this.sprite.src = 'img/priest_Chanting_m.png'
+        break
+      case consts.BEAT_1:
+        this.sprite.src = 'img/priest_Chanting_g.png'
+        break
+      case consts.BEAT_2:
+        this.sprite.src = 'img/priest_Chanting_c.png'
+        break
+      case consts.BEAT_3:
+        this.sprite.src = 'img/priest_Chanting_y.png'
+        break
+      default:
+        this.sprite.src = 'img/priest_Chanting.png'
+        break
+    }
+    this.x = beat * 50
     this.y = 197
+    this.beat = beat
+  }
+
+  render () {
+    let priest = game.currentState.priests[this.beat]
+    if (this.beat == game.syncBar.color) {
+      var y = priest.y - (Math.sin(Math.PI * game.globalPulse.value) * 15)
+    } else {
+      var y = priest.y
+    }
+    game.canvas.drawImage(priest.sprite, priest.x, y)
+    gisAWeeShadowPal({ ctx: game.canvas, sprite: priest.sprite, x: priest.x, y: y})
   }
 }
 
@@ -54,7 +82,7 @@ class StateGameplay {
     this.player.eyes.src = 'img/player_eyes.png';
     this.priests = []
     for (let i = 0; i < 4; i++) {
-      this.priests[i] = new Priest(i * 50)
+      this.priests[i] = new Priest(i)
     }
 
     this.hpBar = new StatusBar({
@@ -126,6 +154,10 @@ class StateGameplay {
     this.level.render()
     this.failPulse.render()
     this.goPulse.render()
+
+    for (let priest of this.priests) {
+      priest.render()
+    }
 
     if (this.switchingLevel) {
       let fillStyle = tinycolor('black').setAlpha(this.switchingFade)
