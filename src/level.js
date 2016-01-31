@@ -6,9 +6,7 @@ import * as consts from './consts'
 
 
 export class Region {
-  constructor (level, x, y, width, height, beat) {
-    this.level = level
-
+  constructor (x, y, width, height, beat) {
     this.x = x
     this.y = y
     this.width = width
@@ -20,16 +18,24 @@ export class Region {
 
   render () {
     game.launchpad.canvas.clip({ pads: true })
-    game.launchpad.canvas.ctx.fillStyle = tinycolor(this.fillStyle)
-      .darken((1 - game.globalPulse) * 33)
-      .toString()
 
+    let fillStyle = tinycolor(this.fillStyle)
+    if (this.beat == game.syncBar.color) {
+      fillStyle = fillStyle
+        .setAlpha((game.globalPulse.value * 0.25) + 0.75)
+        .toString()
+    } else {
+      fillStyle = fillStyle
+        .setAlpha(0.75)
+        .toString()
+    }
+
+    game.launchpad.canvas.ctx.fillStyle = fillStyle
     game.launchpad.canvas.ctx.fillRect(
       this.x, this.y, this.width, this.height)
   }
 
   inRegion (coord) {
-    console.log(coord, this.x, this.y)
     if (coord.x >= this.x && coord.x < this.x + this.width &&
         coord.y >= this.y && coord.y < this.y + this.height) {
       return true
@@ -54,7 +60,7 @@ export class Level {
     /*for (let i = 0; i < consts.COLORS.length && i < this.patterns.length; i++) {
       if (tutorial == 0 || (tutorial == 1 && sound !== null && i === consts.BEATS.indexOf(sound))) {
         this.game.launchpad.canvascanvas.ctx.fillStyle = tinycolor(consts.COLORS[i])
-          .darken((1 - this.game.globalPulse) * 33)
+          .darken((1 - this.game.globalPulse.val) * 33)
           .toString()
 
         for (let pattern of this.patterns[i]) {
@@ -78,18 +84,18 @@ export class Level {
 
 export let level1 = new Level()
 
-level1.regions.push(new Region(
-  level1,
-  0, 0,
-  5, 5,
-  consts.BEAT_0
-))
-level1.regions.push(new Region(
-  level1,
-  5, 5,
-  5, 5,
-  consts.BEAT_1
-))
+level1.regions = [
+  new Region(
+    0, 0,
+    5, 10,
+    consts.BEAT_0
+  ),
+  new Region(
+    5, 0,
+    5, 10,
+    consts.BEAT_1
+  )
+]
 
 level1.beats = [
   consts.BEAT_0,

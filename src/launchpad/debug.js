@@ -49,9 +49,9 @@ export class LaunchpadDebugMidiOut {
         rgb255Data[y] = []
 
       rgb255Data[y][x] = [
-        Math.floor(data[i] / 63 * 255),
-        Math.floor(data[i + 1] / 63 * 255),
-        Math.floor(data[i + 2] / 63 * 255)
+        Math.floor(Math.pow(data[i] / 63, 1 / 2) * 255),
+        Math.floor(Math.pow(data[i + 1] / 63, 1 / 2) * 255),
+        Math.floor(Math.pow(data[i + 2] / 63, 1 / 2) * 255)
       ]
     }
 

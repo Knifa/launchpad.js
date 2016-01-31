@@ -2,7 +2,7 @@ import { getLaunchpad } from './launchpad'
 
 import * as consts from './consts'
 import { AudioScheduler } from './beat'
-import { StatusBar } from './utils'
+import { StatusBar, SyncBar, Pulse } from './utils'
 
 import * as levels from './level'
 
@@ -10,10 +10,12 @@ class Game {
   constructor () {
     getLaunchpad(true).then(this.start.bind(this))
 
-    this.globalPulse = 0
-    this.successPulse = 0
+    this.globalPulse = new Pulse()
+    this.failPulse = new Pulse('#f00')
+    this.goPulse = new Pulse('white')
 
-    this.beats = 0
+    this.totalBeats = 0
+
     this.level = null
     this.oldLevels = []
     this.levels = [levels.level1]
@@ -33,34 +35,35 @@ class Game {
       side: 'left',
       startValue: 0,
       minValue: 0,
-      maxValue: 8,
+      maxValue: 16,
       fillStyle: consts.COLOR_LEVEL})
+
+    this.syncBar = new SyncBar()
+
+    this.now = null
   }
 
   start (launchpad) {
     this.launchpad = launchpad
-    this.launchpad.device.events.on('pad-on', this._onPadOn.bind(this))
+    this.launchpad.device.events.on('pad-on', (event) => { this.event = event })
 
     this.audioScheduler = new AudioScheduler()
     this.audioScheduler.events.on(
-      'beat-scheduled',
-      this._beatScheduledHandler.bind(this))
-    this.audioScheduler.events.on(
       'beat-delayed',
-      (() => { this.globalPulse = 1 }).bind(this))
+      this._beatDelayedHandler.bind(this))
 
     this.levelUp()
     this.update()
   }
 
   render () {
-    this.launchpad.canvas.clip({ controls: true })
-    this.launchpad.canvas.ctx.fillStyle = 'rgba(255, 255, 255, ' + this.globalPulse + ')'
-    this.launchpad.canvas.ctx.fillRect(0, 9, 10, 1)
-
     this.level.render()
     this.hpBar.render()
     this.levelBar.render()
+    this.syncBar.render()
+
+    this.failPulse.render()
+    this.goPulse.render()
 
     this.launchpad.canvas.sync()
     this.launchpad.canvas.clip()
@@ -68,57 +71,38 @@ class Game {
   }
 
   update () {
+    this.now = this.audioScheduler.audio.ctx.currentTime
+
+    this._updatePulses()
+    this._pruneScheduledSounds()
+    this._handlePadOn()
+
     this.render()
-
-    this.successPulse -= 0.05
-    if (this.successPulse < 0) {
-      this.successPulse = 0
-    }
-
-    this.globalPulse -= 0.025
-    if (this.globalPulse < 0) {
-      this.globalPulse = 0
-    }
-
-    let now = this.audioScheduler.audio.ctx.currentTime
-    let recentSound = this.audioScheduler.scheduledSounds[0]
-
-    // Remove sounds which happened before the window
-    while (recentSound !== undefined &&
-           this.level !== null &&
-           recentSound.time < now - consts.BEAT_WINDOW) {
-      recentSound = this.audioScheduler.scheduledSounds.shift()
-      if (recentSound !== null) {
-        this._missedBeat()
-      }
-    }
-
-    if (recentSound !== undefined && this.level !== null) {
-      var afterWindowStart = now >= recentSound.time - consts.BEAT_WINDOW
-      var beforeWindowEnd = now <= recentSound.time + consts.BEAT_WINDOW
-    }
-
-    if (this.event !== null) {
-      this.handlePadOn(now, afterWindowStart, beforeWindowEnd, recentSound)
-      this.event = null
-    }
-
     window.requestAnimationFrame(this.update.bind(this))
   }
 
-  handlePadOn (now, afterWindowStart, beforeWindowEnd, recentSound) {
-    if (this.level === null || this.audioScheduler.scheduledSounds.length === 0)
+  _handlePadOn () {
+    let event = this.event
+    this.event = null
+
+    if (!event || this.level === null || this._inTutorial())
       return
 
-    if (afterWindowStart && beforeWindowEnd) {
-      if (this.level.hit(recentSound.sound, this.event.key.coord)) {
-        this._hitBeat()
+    if (this.audioScheduler.scheduledSounds.length === 0) {
+      this._missedBeat()
+      return
+    }
 
-        this.pulse = 1
+    let recentSound = this.audioScheduler.scheduledSounds[0]
+    let afterWindowStart = this.now >= recentSound.time - consts.BEAT_WINDOW
+    let beforeWindowEnd = this.now <= recentSound.time + consts.BEAT_WINDOW
+
+    if (afterWindowStart && beforeWindowEnd) {
+      if (this.level.hit(recentSound.sound, event.key.coord)) {
+        this._hitBeat()
         this.audioScheduler.scheduledSounds.shift()
-      } else if (recentSound.sound !== 'defaultSound') {
+      } else if (recentSound.sound !== null) {
         // There is still time to hit the current beat
-        this.pulse = 0
         this._missedBeat()
       }
     } else {
@@ -126,8 +110,7 @@ class Game {
       if (afterWindowStart && !beforeWindowEnd) {
         this.audioScheduler.scheduledSounds.shift()
       }
-      this.pulse = 0
-      if (recentSound.sound !== 'defaultSound') {
+      if (recentSound.sound !== null) {
         this._missedBeat()
       }
     }
@@ -155,42 +138,50 @@ class Game {
     }
   }
 
-  _onPadOn (event) {
-    this.event = event
-  }
+  _beatDelayedHandler (soundColor) {
+    this.globalPulse.trigger()
 
-  _beatScheduledHandler () {
-    if (this.tutorial == 0) {
-      return
+    this.totalBeats++
+    if (this.totalBeats === this.level.beats.length * consts.TUTORIAL_BARS) {
+      this.goPulse.trigger()
     }
-    this.beats++
-    if (this.beats >= this.audioScheduler.seq.length * 1) {
-      this.beats = 0
-      this.tutorial = 0
-    } else if (this.beats >= this.audioScheduler.seq.length * 1) {
-      this.tutorial = 2
-    }
+
+    this.syncBar.color = soundColor
   }
 
   _hitBeat () {
-    console.log('hit')
-
-    if (this.tutorial) {
-      return
-    }
-
-    this.levelBar.value++
+    this.levelBar.value += 2
   }
 
   _missedBeat () {
-    console.log('miss')
-
-    if (this.tutorial) {
-      return
-    }
-
     this.hpBar.value--
     this.levelBar.value--
+    this.failPulse.trigger()
+  }
+
+  _updatePulses() {
+    this.globalPulse.update()
+    this.failPulse.update()
+    this.goPulse.update()
+  }
+
+  _pruneScheduledSounds () {
+    let recentSound = this.audioScheduler.scheduledSounds[0]
+
+    while (recentSound !== undefined &&
+           this.level !== null &&
+           this.now > recentSound.time + consts.BEAT_WINDOW) {
+      recentSound = this.audioScheduler.scheduledSounds.shift()
+      if (recentSound !== null &&
+          recentSound !== undefined
+          && !this._inTutorial()) {
+        this._missedBeat()
+      }
+    }
+  }
+
+  _inTutorial () {
+    return this.totalBeats <= this.level.beats.length * consts.TUTORIAL_BARS
   }
 }
 

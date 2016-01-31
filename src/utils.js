@@ -1,3 +1,9 @@
+import tinycolor from 'tinycolor2'
+
+import { game } from './game'
+import * as consts from './consts'
+
+
 export function RgbaToCss(rgba) {
   if (rgba.length === 3) {
     let rgb255 = [
@@ -66,5 +72,56 @@ export class StatusBar {
 
   reset () {
     this._value = this.startValue
+  }
+}
+
+
+export class SyncBar {
+  constructor () {
+    this.color = null
+  }
+
+  render () {
+    // Draw sync bar
+    let fillStyle = null
+    if (this.color !== null) {
+      fillStyle = consts.COLORS[this.color]
+    } else {
+      fillStyle = 'white'
+    }
+
+    fillStyle = tinycolor(fillStyle)
+      .setAlpha(game.globalPulse.value)
+      .toString()
+
+    game.launchpad.canvas.clip({ controls: true })
+    game.launchpad.canvas.ctx.fillStyle = fillStyle
+    game.launchpad.canvas.ctx.fillRect(0, 9, 10, 1)
+  }
+}
+
+export class Pulse {
+  constructor (fillStyle = 'white') {
+    this.value = 0
+    this.fillStyle = fillStyle
+  }
+
+  render() {
+    let color = tinycolor(this.fillStyle)
+      .setAlpha(this.value * 0.33)
+
+    game.launchpad.canvas.clip({ pads: true })
+    game.launchpad.canvas.ctx.fillStyle = color.toString()
+    game.launchpad.canvas.ctx.fillRect(0, 0, 10, 10)
+  }
+
+  update () {
+    this.value -= 0.025
+    if (this.value < 0)
+      this.value = 0
+  }
+
+  trigger() {
+    this.value = 1
   }
 }

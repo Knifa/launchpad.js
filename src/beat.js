@@ -44,7 +44,6 @@ export class AudioScheduler {
     this.scheduledSounds = []
 
     this.events = new EventEmitter()
-    this.callback = () => {}
 
     this.interval = window.setInterval(
       this.update.bind(this),
@@ -56,30 +55,29 @@ export class AudioScheduler {
   }
 
   update () {
+    this._triggerMetronome()
+
     if (this.seq.length === 0)
       return
-
-    this._triggerMetronome()
-    this.events.emit('beat-triggered')
-    window.setTimeout(
-      (() => {
-        this.events.emit('beat-delayed')
-      }).bind(this), consts.AUDIO_DELAY * 1000)
 
     let currentSound = this.seq[this.seqIndex]
     this.seqIndex = (this.seqIndex + 1) % this.seq.length
 
-    if (currentSound == null)
-      return
+    if (currentSound !== null) {
+      this.synths[currentSound].trigger()
+      this.scheduledSounds.push({
+        sound: currentSound,
+        time: this.audio.ctx.currentTime + consts.AUDIO_DELAY
+      })
 
-    this.synths[currentSound].trigger()
-    this.scheduledSounds.push({
-      sound: currentSound,
-      time: this.audio.ctx.currentTime + consts.AUDIO_DELAY
-    })
+      this.events.emit('beat-scheduled')
+    }
 
-    this.events.emit('beat-scheduled')
-    this.callback()
+    this.events.emit('beat-triggered', currentSound)
+    window.setTimeout(
+      (() => {
+        this.events.emit('beat-delayed', currentSound)
+      }).bind(this), consts.AUDIO_DELAY * 1000)
   }
 
   _triggerMetronome () {
